@@ -5,6 +5,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
+from numpy.random import default_rng
+
 
 # Y a une erreur dans les calculs ...
 def localisation_3c(c1, c2, c3, t1, t2, t3):
@@ -57,7 +59,8 @@ def localisation(sensors, t, n = 10):
     plt.scatter(x_sensors, y_sensors, color = "black")
 
     for _ in range(n):
-        i, j, k = np.random.randint(len(sensors), 3)
+        rng = default_rng()
+        i, j, k = rng.choice(len(sensors), size=3, replace=False)
         c1, c2, c3 = sensors[i], sensors[j], sensors[k]
         t1, t2, t3 = t[i], t[j], t[k]
         localisation = localisation_3c(c1, c2, c3, t1, t2, t3)
@@ -66,16 +69,16 @@ def localisation(sensors, t, n = 10):
     plt.show()
 
 if __name__ == "__main__":
-    c1, c2, c3 = (0,0), (2,0), (1,2)
-    t1, t2, t3 = 1, 0, 0
+    c1, c2, c3, c4, c5 = (0,0), (2,0), (1,2), (3,4), (8,1)
+    t1, t2, t3, t4, t5 = 0, 0, 0, 0, 0
     print(localisation_3c(c1, c2, c3, t1, t2, t3))
 
     affichage_3c([c1, c2, c3], localisation_3c(c1, c2, c3, t1, t2, t3))
-    # localisation([c1, c2, c3], [t1, t2, t3], n=1)
+    localisation([c1, c2, c3, c4, c5], [t1, t2, t3, t4, t5], n=5)
 
 
 
 
-
+# A CHECK
 
 
