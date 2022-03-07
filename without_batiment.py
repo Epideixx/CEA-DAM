@@ -4,6 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
 
 # Y a une erreur dans les calculs ...
 def localisation_3c(c1, c2, c3, t1, t2, t3):
@@ -14,23 +15,22 @@ def localisation_3c(c1, c2, c3, t1, t2, t3):
     - (c1, c2, c3) -> Localizations (xi, yi) of sensors
     Output : (x, y) = Localisation of the source
     """
-    
-    t = [t1, t2, t3]
-    c = [c1, c2, c3]
-    i_min = np.argmin(t)
-
-    t_1 = t.pop(i_min)
-    c_1 = c.pop(i_min)
-    t_2, t_3 = t
-    c_2, c_3 = c
 
     # With equation resolution
-    B = np.array([[t_2 - t_1 - (c_2[0]**2 - c_1[0]**2) - (c_2[1]**2 - c_1[1]**2)],[t_3 - t_1 - (c_3[0]**2 - c_1[0]**2) - (c_3[1]**2 - c_1[1]**2)]])
-    A_inv = 1/(2*((c_1[0] - c_2[0])*(c_1[1] - c_3[1]) - (c_1[0] - c_3[0])*(c_1[1] - c_2[1])))
+    x1, y1 = c1
+    x2, y2 = c2
+    x3, y3 = c3
+    t_exp = 0
+    v = 1
 
-    A_inv = A_inv * np.array([[(c_1[1] - c_3[1]), (c_2[1] - c_1[1])], [(c_3[0] - c_1[0]), (c_1[0] - c_2[0])]])
+    def func(p):
+        x, y, t_exp = p
+        return [2*v**2*t_exp + 2*(x2 - x1)*x + 2*(y2 - y1)*y - (x2**2 + y2**2 - x1**2 - y1**2)+ v**2*(t2**2 - t1**2), 2*v**2*t_exp + 2*(x3 - x1)*x + 2*(y3 - y1)*y - (x3**2 + y3**2 - x1**2 - y1**2)+ v**2*(t3**2 - t1**2), 2*v**2*t_exp + 2*(x3 - x2)*x + 2*(y3 - y2)*y - (x3**2 + y3**2 - x2**2 - y2**2)+ v**2*(t3**2 - t2**2)]
 
-    x, y = np.dot(A_inv, B)[:, 0]
+    root = fsolve(func, [1, 1, 1])
+
+    x, y, t_exp = root
+    
     return x, y
 
 
@@ -63,15 +63,15 @@ def localisation(sensors, t, n = 10):
         localisation = localisation_3c(c1, c2, c3, t1, t2, t3)
         plt.scatter(localisation[0], localisation[1])
 
-    plt.show
+    plt.show()
 
 if __name__ == "__main__":
-    c1, c2, c3 = (0,2), (0,0), (2,1)
-    t1, t2, t3 = 0, 10, 00
+    c1, c2, c3 = (0,0), (2,0), (1,2)
+    t1, t2, t3 = 1, 0, 0
     print(localisation_3c(c1, c2, c3, t1, t2, t3))
 
     affichage_3c([c1, c2, c3], localisation_3c(c1, c2, c3, t1, t2, t3))
-    localisation([c1, c2, c3], [t1, t2, t3], n=1)
+    # localisation([c1, c2, c3], [t1, t2, t3], n=1)
 
 
 
