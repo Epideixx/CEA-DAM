@@ -135,9 +135,9 @@ def ACO(n_ants, pts_map, edge_size, h_edges, v_edges):
 
 
 
-graph = make_graph(Bat_list, edge_size=4)
+graph = make_graph(Bat_list, edge_size=10)
 
-show_graph(graph, 4, show=False)
+show_graph(graph, 10, show=False)
 # show_bat(Bat_list, show=False)
 plt.axis('equal')
 plt.show()
