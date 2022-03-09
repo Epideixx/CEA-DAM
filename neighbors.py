@@ -1,6 +1,5 @@
-from SouffleBati2D.py import *
-from sklearn import neighbors
-from matplotlib import path
+from SouffleBati2D import *
+from is_inside import *
 
 Bat_list = [Bat1,Bat2,Bat3,Bat4,Bat5,Bat6]
   
@@ -11,17 +10,15 @@ def get_pts_coord(pts_map,n,e):
             pts_coord.append((x*e,y*e))
     return(pts_coord)
 
-def make_graph(bat_coord, map_size=100.0, edge_size):
+def make_graph(bat_coord, map_size=100.0, edge_size=10.0):
     """ Map de map_size x map_size avec un graph grille d'arretes de taille edge_size """
     n_edge = int(map_size//edge_size)
     pts_map = np.ones((n_edge,n_edge))
     pts_coord = get_pts_coord(pts_map, n=n_edge, e=edge_size)
-    for bat_num in range(len(Bat_list)):
-        bat_path = path.Path(Bat_list[bat_num])
-        in_bat = bat_path.contains_points(pts_coord)
-        for k in range(0,len(in_bat)):
-            if in_bat[k]:
-                pts_map[k//n_edge,k%n_edge] = 0
+    for bat in Bat_list:
+        for e in pts_coord :
+            if ray_tracing_method(e[0], e[1], bat) :
+                pts_map[e[0], e[1]] = 0
     return(pts_map)
 
 def get_neighbors(x0, y0, edge_size):
