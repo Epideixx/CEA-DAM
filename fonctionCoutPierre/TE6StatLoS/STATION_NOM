@@ -1,0 +1,11 @@
+# Nombre de stations fixes
+6
+# Noms des stations fixes
+ST0 50 60
+ST1 55 60
+ST2 60 60
+ST3 65 60
+ST4 70 60
+ST5 45 60
+# Noms des scalaires associes aux stations fixes
+pmat
