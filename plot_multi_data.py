@@ -36,6 +36,8 @@ for index in range(nb_stations):
 for i in range(nb_stations):
     # axs[i].plot(data_t[i],data_sign[i])
     plt.plot(data_t[i], data_sign[i], color=COLORS[i])
+plt.xlabel("Time (s)")
+plt.ylabel("Pression (Pa)")
 plt.show()
 
 
