@@ -39,7 +39,7 @@ for i in range(nb_stations):
     plt.plot(data_t[i], data_sign[i], color=COLORS[i])
 plt.xlabel("Time (s)")
 plt.ylabel("Pression (Pa)")
-plt.title(args.title)
+plt.title()
 plt.show()
 
 
