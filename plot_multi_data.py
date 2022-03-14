@@ -7,6 +7,7 @@ COLORS = ['blue','red','green','orange','purple','grey']
 parser = argparse.ArgumentParser(description="retrieve file name")
 
 parser.add_argument("--folder", help="Folder where station data is to be read", required=True)
+parser.add_argument("--title", help="Graph title", required=False)
 
 args = parser.parse_args()
 
@@ -38,6 +39,7 @@ for i in range(nb_stations):
     plt.plot(data_t[i], data_sign[i], color=COLORS[i])
 plt.xlabel("Time (s)")
 plt.ylabel("Pression (Pa)")
+plt.title(args.title)
 plt.show()
 
 
