@@ -21,7 +21,7 @@ from scipy.optimize import fsolve, least_squares
 from numpy.random import default_rng
 
 
-def localisation_3c(c1, c2, c3, t1, t2, t3):
+def localisation_3c(c1, c2, c3, c4, t1, t2, t3, t4):
     """
     Localisation of the source with the first spike on each one of the three captors
 
@@ -41,23 +41,27 @@ def localisation_3c(c1, c2, c3, t1, t2, t3):
     x1, y1 = c1
     x2, y2 = c2
     x3, y3 = c3
-    v = 340 # To edit, for the moment speed of the sound
+    x4, y4 = c4
+    # v = 340 # To edit, for the moment speed of the sound
 
     def func(p):
-        x, y, t_exp = p
-        return [(x - x1)**2 + (y - y1)**2 - v**2 * (t1 - t_exp)**2, (x - x2)**2 + (y - y2)**2 - v**2 * (t2 - t_exp)**2, (x - x3)**2 + (y - y3)**2 - v**2 * (t3 - t_exp)**2]
+        x, y, t_exp, v = p
+        return [(x - x1)**2 + (y - y1)**2 - v**2 * (t1 - t_exp)**2, (x - x2)**2 + (y - y2)**2 - v**2 * (t2 - t_exp)**2, (x - x3)**2 + (y - y3)**2 - v**2 * (t3 - t_exp)**2, (x - x4)**2 + (y - y4)**2 - v**2 * (t4 - t_exp)**2]
+        # return [2*v**2*t_exp + 2*(x2 - x1)*x + 2*(y2 - y1)*y - (x2**2 + y2**2 - x1**2 - y1**2)+ v**2*(t2**2 - t1**2), 2*v**2*t_exp + 2*(x3 - x1)*x + 2*(y3 - y1)*y - (x3**2 + y3**2 - x1**2 - y1**2)+ v**2*(t3**2 - t1**2), 2*v**2*t_exp + 2*(x3 - x2)*x + 2*(y3 - y2)*y - (x3**2 + y3**2 - x2**2 - y2**2)+ v**2*(t3**2 - t2**2)]
 
+    # root = fsolve(func, [0, 0, 0, 0]) #Solve the equation
+    root = least_squares(func, [65, 32, 0.0, 340], bounds = ((0, 0, -10, 100),(100, 100, 1, 500))) #Solve the equation
 
-    score = np.inf
+    # x, y = root[0], root[1]
+    x, y, t_exp, v = root.x
+    # print(v)
+    print("Informations sur la solution : ", root)
+    
+    if root.cost < 1 :
+        return x, y
 
-    for x0 in range(0, 100, 10):
-        for y0 in range(0, 100, 10):
-            root = least_squares(func, [x0, y0, 1], bounds = ((0, 0, -10),(110, 110, 1))) #Solve the equation
-
-            if root.cost < score :
-                x, y, t_exp = root.x
-
-    return x, y
+    else :
+        return None
 
 
 def affichage_3c(sensors, explosion):
@@ -79,7 +83,7 @@ def affichage_3c(sensors, explosion):
     plt.show()
 
 
-def localisations(sensors, t, n = 10, show = True, additional_point = None, save_file = None):
+def localisations(sensors, t, n = 10, show = True, additional_point = None):
     """
     Returns the localisation of the sources without any building.
     Eventually, plot the result.
@@ -113,20 +117,18 @@ def localisations(sensors, t, n = 10, show = True, additional_point = None, save
 
     for _ in range(n):
         rng = default_rng()
-        i, j, k = rng.choice(len(sensors), size=3, replace=False)
-        c1, c2, c3 = sensors[i], sensors[j], sensors[k]
-        t1, t2, t3 = t[i], t[j], t[k]
-        localisation = localisation_3c(c1, c2, c3, t1, t2, t3)
-        local.append(localisation)
+        i, j, k, l = rng.choice(len(sensors), size=4, replace=False)
+        c1, c2, c3, c4 = sensors[i], sensors[j], sensors[k], sensors[l]
+        t1, t2, t3, t4 = t[i], t[j], t[k], t[l]
+        localisation = localisation_3c(c1, c2, c3, c4, t1, t2, t3, t4)
+        if localisation != None :
+            local.append(localisation)
 
-        if show :
-            plt.scatter(localisation[0], localisation[1])
+            if show :
+                plt.scatter(localisation[0], localisation[1])
 
     if show :
         plt.show()
-
-        if save_file :
-            plt.savefig(save_file)
 
     return local
 
@@ -174,7 +176,7 @@ def first_spike(sensor_data, tresh=0.1,neighbourhood=3):
         if signal_data[x] >= tresh*signal_data[global_max]:
             return signal_t[x]
 
-def main(folder_stations, n = 10, explosion_source = None, save_file = None) :
+def main(folder_stations, n = 10, explosion_source = None) :
     """
     Plot the real explosion source and n theoretical sources
 
@@ -215,7 +217,7 @@ def main(folder_stations, n = 10, explosion_source = None, save_file = None) :
         t.append(t_detect)
 
     # Localisations
-    _ = localisations(sensors= sensors, t = t, n = n, show = True, additional_point= explosion_source, save_file = save_file)
+    _ = localisations(sensors= sensors, t = t, n = n, show = True, additional_point= explosion_source)
 
     
 
@@ -237,8 +239,8 @@ if __name__ == "__main__":
     # print(f_spike)
 
     # ----- Test 3 : Without building-----
-    explosion = (40, 65)
-    main(folder_stations="Simulations/Simu_without_building_40_65", n = 20, explosion_source=explosion)
+    explosion = (65, 32)
+    main(folder_stations="Simulations/Simu_without_building_65_32", n = 30, explosion_source=explosion)
 
     # ----- Test 4 : With building-----
     explosion = (40, 65)

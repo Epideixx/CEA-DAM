@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import csv
 import argparse
+import os
 COLORS = ['blue','red','green','orange','purple','grey']
 
 parser = argparse.ArgumentParser(description="retrieve file name")
@@ -16,7 +17,7 @@ data_t = [[] for i in range(nb_stations)]
 data_sign = [[] for i in range(nb_stations)]
 
 for index in range(nb_stations):
-    file_name = args.folder + "\STATION_ST" + str(index)
+    file_name = os.path.join(args.folder,"STATION_ST" + str(index))
 
     
 

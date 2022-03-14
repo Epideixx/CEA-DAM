@@ -43,21 +43,15 @@ def localisation_3c(c1, c2, c3, t1, t2, t3):
     x3, y3 = c3
     v = 340 # To edit, for the moment speed of the sound
 
-    def func(p):
-        x, y, t_exp = p
-        return [(x - x1)**2 + (y - y1)**2 - v**2 * (t1 - t_exp)**2, (x - x2)**2 + (y - y2)**2 - v**2 * (t2 - t_exp)**2, (x - x3)**2 + (y - y3)**2 - v**2 * (t3 - t_exp)**2]
+    for i in range(10):
+        t_exp = 10**(-10) * i
+        x = ((y1 - y2)*(y1 + y2 + (2*((x2 - x3)*(x2 + x3 - (2*(t1 - t2)*(t1 + t2 - 2*t_exp)*v**2 + 2*x1**2 - 2*x2**2 + 2*(y1 + y2)*(y1 - y2))/(2*x1 - 2*x2)) + y2**2 - y3**2 + v**2*(t2 - t3)*(t2 + t3 - 2*t_exp)))/((2*y2 - 2*y3)*(((4*y1 - 4*y2)*(x2 - x3))/((2*x1 - 2*x2)*(2*y2 - 2*y3)) - 1))) + x1**2 - x2**2 + v**2*(t1 - t2)*(t1 + t2 - 2*t_exp))/(2*x1 - 2*x2)
+        y = -((x2 - x3)*(x2 + x3 - (2*(t1 - t2)*(t1 + t2 - 2*t_exp)*v**2 + 2*x1**2 - 2*x2**2 + 2*(y1 + y2)*(y1 - y2))/(2*x1 - 2*x2)) + y2**2 - y3**2 + v**2*(t2 - t3)*(t2 + t3 - 2*t_exp))/((2*y2 - 2*y3)*(((4*y1 - 4*y2)*(x2 - x3))/((2*x1 - 2*x2)*(2*y2 - 2*y3)) - 1))
+        plt.scatter(x, y)
 
+    plt.show()
 
-    score = np.inf
-
-    for x0 in range(0, 100, 10):
-        for y0 in range(0, 100, 10):
-            root = least_squares(func, [x0, y0, 1], bounds = ((0, 0, -10),(110, 110, 1))) #Solve the equation
-
-            if root.cost < score :
-                x, y, t_exp = root.x
-
-    return x, y
+    
 
 
 def affichage_3c(sensors, explosion):
@@ -79,7 +73,7 @@ def affichage_3c(sensors, explosion):
     plt.show()
 
 
-def localisations(sensors, t, n = 10, show = True, additional_point = None, save_file = None):
+def localisations(sensors, t, n = 10, show = True, additional_point = None):
     """
     Returns the localisation of the sources without any building.
     Eventually, plot the result.
@@ -109,7 +103,7 @@ def localisations(sensors, t, n = 10, show = True, additional_point = None, save
     plt.scatter(x_sensors, y_sensors, color = "black", marker = "P")
     
     if additional_point :
-        plt.scatter(additional_point[0], additional_point[1], marker='^')
+        plt.scatter(additional_point[0], additional_point[1], marker='**')
 
     for _ in range(n):
         rng = default_rng()
@@ -124,9 +118,6 @@ def localisations(sensors, t, n = 10, show = True, additional_point = None, save
 
     if show :
         plt.show()
-
-        if save_file :
-            plt.savefig(save_file)
 
     return local
 
@@ -174,7 +165,7 @@ def first_spike(sensor_data, tresh=0.1,neighbourhood=3):
         if signal_data[x] >= tresh*signal_data[global_max]:
             return signal_t[x]
 
-def main(folder_stations, n = 10, explosion_source = None, save_file = None) :
+def main(folder_stations, n = 10, explosion_source = None) :
     """
     Plot the real explosion source and n theoretical sources
 
@@ -215,7 +206,7 @@ def main(folder_stations, n = 10, explosion_source = None, save_file = None) :
         t.append(t_detect)
 
     # Localisations
-    _ = localisations(sensors= sensors, t = t, n = n, show = True, additional_point= explosion_source, save_file = save_file)
+    _ = localisations(sensors= sensors, t = t, n = n, show = True, additional_point= explosion_source)
 
     
 
@@ -223,9 +214,9 @@ def main(folder_stations, n = 10, explosion_source = None, save_file = None) :
 if __name__ == "__main__":
     
     # ------ Test 1 -----
-    # c1, c2, c3, c4, c5 = (0,0), (2,0), (1,2), (3,4), (8,1)
-    # t1, t2, t3, t4, t5 = 0, 0, 0, 0, 0
-    # print(localisation_3c(c1, c2, c3, t1, t2, t3))
+    c1, c2, c3, c4, c5 = (0,0), (2,0), (1,2), (3,4), (8,1)
+    t1, t2, t3, t4, t5 = 1, 2, 3, 4, 0
+    print(localisation_3c(c1, c2, c3, t1, t2, t3))
 
     # affichage_3c([c1, c2, c3], localisation_3c(c1, c2, c3, t1, t2, t3))
     # res = localisations([c1, c2, c3, c4, c5], [t1, t2, t3, t4, t5], n=5)
@@ -235,14 +226,6 @@ if __name__ == "__main__":
     # data_sensor_0 = pd.read_csv("Simulation_1/STATION_ST0", sep = " ", index_col=False)
     # f_spike = first_spike(data_sensor_0)
     # print(f_spike)
-
-    # ----- Test 3 : Without building-----
-    explosion = (40, 65)
-    main(folder_stations="Simulations/Simu_without_building_40_65", n = 20, explosion_source=explosion)
-
-    # ----- Test 4 : With building-----
-    explosion = (40, 65)
-    main(folder_stations="Simulation_2", n = 20, explosion_source=explosion)
 
 
     print("Everything seems to work ...")
