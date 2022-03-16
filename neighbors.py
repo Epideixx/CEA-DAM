@@ -2,6 +2,7 @@
 from is_inside import *
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 Bat1 = [(10.08,10.223),
         (30.08,10.223),
@@ -41,7 +42,7 @@ Bat6 = [(20.08,40.223),
         (35.08,70.223),
         (20.08,70.223)]
 
-Bat_list = [[tuple([5*x for x in i]) for i in Bat] for Bat in [Bat1,Bat2,Bat3,Bat4,Bat5,Bat6]]
+Bat_list = [[tuple([x*5 for x in i]) for i in Bat] for Bat in [Bat1,Bat2,Bat3,Bat4,Bat5,Bat6]]
   
 def get_pts_coord(pts_map,n,e):
     pts_coord = []
@@ -50,7 +51,7 @@ def get_pts_coord(pts_map,n,e):
             pts_coord.append((x*e,y*e))
     return(pts_coord)
 
-def make_graph(bat_coord, map_size=100.0, edge_size=10.0):
+def make_graph(bat_coord, map_size, edge_size):
     """ Map de map_size x map_size avec un graph grille d'arretes de taille edge_size """
     n_edge = int(map_size//edge_size)
     pts_map = np.ones((n_edge,n_edge))
@@ -84,5 +85,5 @@ def get_neighbors(pts_map, x0, y0):
 
 G = make_graph(Bat_list, 500, 1)
 
-plt.imshow(G,interpolation='nearest', cmap = 'gray')
+plt.imshow(G, interpolation='nearest', cmap=cm.Greys_r)
 plt.show()
