@@ -50,9 +50,9 @@ def localisation_3c(c1, c2, c3, t1, t2, t3):
 
     score = np.inf
 
-    for x0 in range(0, 100, 10):
-        for y0 in range(0, 100, 10):
-            root = least_squares(func, [x0, y0, 1], bounds = ((0, 0, -10),(110, 110, 1))) #Solve the equation
+    for x0 in range(20, 80, 5):
+        for y0 in range(20, 80, 5):
+            root = least_squares(func, [x0, y0, 1], bounds = ((0, 0, -1),(110, 110, 1))) #Solve the equation
 
             if root.cost < score :
                 x, y, t_exp = root.x
@@ -106,10 +106,8 @@ def localisations(sensors, t, n = 10, show = True, additional_point = None, save
     local = []
 
     x_sensors, y_sensors = list(zip(*sensors))
-    plt.scatter(x_sensors, y_sensors, color = "black", marker = "P")
+    plt.scatter(x_sensors, y_sensors, color = "black", marker = "P", s=40, label="Sensors")
     
-    if additional_point :
-        plt.scatter(additional_point[0], additional_point[1], marker='^')
 
     for _ in range(n):
         rng = default_rng()
@@ -119,14 +117,19 @@ def localisations(sensors, t, n = 10, show = True, additional_point = None, save
         localisation = localisation_3c(c1, c2, c3, t1, t2, t3)
         local.append(localisation)
 
-        if show :
-            plt.scatter(localisation[0], localisation[1])
+    if show :
+        plt.scatter(list(zip(*local))[0], list(zip(*local))[1], color = "red", s= 40, label="Possible sources")
+
+    if additional_point :
+        plt.scatter(additional_point[0], additional_point[1], marker='^', s = 80, label="Real source")
 
     if show :
-        plt.show()
-
+        plt.legend()
         if save_file :
             plt.savefig(save_file)
+
+        plt.show()
+
 
     return local
 
