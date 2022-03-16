@@ -1,9 +1,11 @@
 # from logging.handlers import WatchedFileHandler
 #from SouffleBati2D import *
 # from costfunction import cost_function
-from polygon import is_inside_poly
+from is_inside import is_inside as is_inside_poly
 import random
 import numpy as np
+from math import sqrt, exp, pi
+import matplotlib.pyplot as plt
 
 
 ### PAS = 0.4 => environ 1min de simulation
@@ -65,27 +67,66 @@ Sensors_list = [(12.82,33.83),
 def create_fname(X, Y, XYindex, round=4):
     return( "CAS_" + str(XYindex) + "_" + str(X) + "_" + str(Y) )
 
-
+'''
 def eval_solution(XS, YS, id):
     CAS_folder_name = create_fname(XS,YS,id)
     CAS_SB2D(CAS_folder_name, AMR, PAS, M_TNT, TPS_F, XS, YS)
     return(cost_function(CAS_folder_name))
+'''
+
+def eval_solution(x,y,id=0):
+    """ Toy example """
+    x -= 30 ; y -= 50
+    f_x = 1 - np.exp(-0.0005*(x*x + y*y)) # / sqrt(2*pi)
+    return(f_x)
+
+
+def show_3D(f, points_series, dx, dy, z_level, bat_list=Bat_list, colors=['red','blue','green','gray']):
+    ## Compute values
+    X, Y = np.meshgrid(np.linspace(0, 100, 50), np.linspace(0, 100, 50))
+    Z = f(X,Y)
+
+    ## Plot 2D shape
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.contour3D(X, Y, Z, 50, cmap='binary')
+    # ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+
+    ## Plot bat
+    if bat_list != None:
+        for i in range(len(Bat_list)):
+            the_bat = Bat_list[i] ; the_bat.append(Bat_list[i][0])
+            for k in range(0,len(the_bat)-1):
+                ax.plot([the_bat[k][0]-dx,the_bat[k+1][0]-dx], [the_bat[k][1]-dy,the_bat[k+1][1]-dy], z_level, 'k-')
+
+    ## Plot points
+    for snum in range(0,len(points_series)):
+        series = points_series[snum]
+        for (x,y,z) in series:
+            ax.scatter(x-dx,y-dy, z_level, color=colors[snum])
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    plt.show()
+    # ax.view_init(60, 35)
+    # fig
 
 
 def is_inside_bat(x, bat_list):
     """ Checks if point x is inside a bat defined in bat_list or not. """
     is_inside_bat = False ; i = 0
-    while not(is_inside_bat) and len(i)<bat_list:
+    while not(is_inside_bat) and i<len(bat_list):
         is_inside_bat = is_inside_poly(x, bat_list[i])
         i += 1
-    return(is_inside_bat,i-1)
+    return(is_inside_bat)
 
 
 def get_random_pt(map_size,bat_list):
     """ Creates a random valid point on the map. """
     valid_pt = False
     while not(valid_pt):
-        px = map_size*random() ; py = map_size*random()
+        px = map_size*random.random() ; py = map_size*random.random()
         valid_pt = not(is_inside_bat((px,py),bat_list))
     return( (px,py) )
 
@@ -120,7 +161,7 @@ def smart_insert(l,elt,id):
     l.append( (elt[0],elt[1],elt_cost) )
     i = len(l)-1 ; switch = True
     while switch and (i>0):
-        if l[i-1]>l[i]:
+        if l[i-1][2]>l[i][2]: # compare the 3rd component of each element
             buff = l[i-1]
             l[i-1] = l[i]
             l[i] = buff
@@ -135,7 +176,7 @@ def get_a_child(a, b, std, map_size, bat_list):
         Otherwise, we search a valid child from the points of the dashed line between a and b + mutation.
         If there is no valid point among them, we create a random valid point on the map. """
     mean_pt = ( (a[0]+b[0])/2 , (a[1]+b[1])/2 ) # default point
-    ghost_pt, bat_num = is_inside_bat(mean_pt, bat_list)
+    ghost_pt = is_inside_bat(mean_pt, bat_list)
 
     if ghost_pt: # the mean point is inside a bat
         line_pts = dashed_line(a,b,n=20) # create candidates for child_pt
@@ -150,20 +191,19 @@ def get_a_child(a, b, std, map_size, bat_list):
     else: # the mean point is valid
         child_pt = mean_pt
 
-    return(mutate_pt(child_pt)) # return a mutant from the valid child_pt
+    return(mutate_pt(child_pt, std, bat_list)) # return a mutant from the valid child_pt
 
 
 def create_children(d, rr, mut_std, pt_ID, map_size, bat_list):
     """ Creates a number a children equals to r% the initial population d. Keeps the order in list d. """
     n_children = int(rr*len(d))
-    index = range(len(d))
+    index = [j for j in range(len(d))]
     random.shuffle(index)
-    new_data = []
     for k in range(n_children):
         i1 = index.pop() ; i2 = index.pop()
-        new_data = smart_insert(new_data, get_a_child(d[i1], d[i2], mut_std, map_size, bat_list), pt_ID)
+        d = smart_insert(d, get_a_child(d[i1], d[i2], mut_std, map_size, bat_list), pt_ID)
         pt_ID += 1
-    return(new_data, id)
+    return(d, pt_ID)
 
 
 ### 3 - DEATH FEATURES
@@ -176,7 +216,7 @@ def kill_some_pts(pts, dr, di):
         survival_list[len(pts)-k] = False
     new_pts = []
     for k in range(0,len(pts)):
-        if random()<=di: # a chance to survive or a risk to die
+        if random.random()<=di: # a chance to survive or a risk to die
             survival_list[k] = not(survival_list[k])
         if survival_list[k]: # the survivors
             new_pts.append(pts[k])
@@ -192,38 +232,72 @@ def init_gen_algo(n, map_size, bat_list):
         (ax,ay) = get_random_pt(map_size,bat_list)
         data.append( (ax, ay, eval_solution(ax,ay,pt_ID)) )
         pt_ID += 1
-    data = sorted(data, reverse=True, key = lambda u : u[2])
+    data = sorted(data, key = lambda u : u[2])
     return(data,pt_ID)
 
 
 ### 5 - GENETIC ALGORITHM
 
-def genetic_algo(n_pts, map_size, bat_list, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0):
+def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False):
     """ Runs an optimization process on a map with buildings using a genetic method. """
 
-    data, pt_ID = init_gen_algo(n_pts, map_size, bat_list)
+    data_init, pt_ID = init_gen_algo(n_pts, map_size, bat_list) # ; print("DATA",data)
+    data = data_init
 	
     for gen_k in range(n_gen):
+        if show:
+            print( "\n### Generation {0}".format(gen_k+1) )
 
         # REPRODUCTION
         data, pt_ID = create_children(data, repro_rate, mut_std, pt_ID, map_size, bat_list) # data is still sorted regarding the 3rd component of each elt
+        if show:
+            print( "> REPRODUCTION : {0} individuals - BEST = {1}".format(len(data),data[0]) )
 
         # DEATH
         data = kill_some_pts(data, death_rate, death_immun) # data is still sorted regarding the 3rd component of each elt
+        if show:
+            print( "> DEATH : {0} individuals - BEST = {1}".format(len(data),data[0]) )
+
+    if show:
+        show_3D(eval_solution, dx=30, dy=50, z_level=0, points_series=[data_init,data])
 
     return(data)
 
 
+### 6 - WRITE/READ DATA
+
+def write_in_txt(d,fname):
+    f = open("gen_data/" + fname, "w")
+    for (ax,ay,cost_a) in d:
+        f.write("{0};{1};{2}\n".format(ax,ay,cost_a))
+    f.close()
+
+def read_in_txt(fname):
+    d = []
+    f = open("gen_data/" + fname, "r")
+    txt_lines = f.read().split("\n")
+    for line in txt_lines:
+        if len(line)>0:
+            elts = line.split(";")
+            d.append( (float(elts[0]),float(elts[1]),float(elts[2])) )
+        else:
+            print("EMPTY LINE FOUND...")
+    f.close()
+    return(d)
+
+
 ### 6 - LAUNCH !
 
-if __name__ == "__main__":
-    genetic_algo(
-                 n_pts = 10,
-                 map_size = 100,
-                 bat_list = Bat_list,
-                 n_gen = 10,
-                 death_rate = 0.1,
-                 death_immun = 0.05,
-                 repro_rate = 0.2,
-                 mut_std = 1.0
-                 )
+if 1 and __name__ == "__main__":
+
+    final_points = genetic_algo(map_size = 100,
+                                bat_list = Bat_list,
+                                n_pts = 50,
+                                n_gen = 20,
+                                death_rate = 0.1,
+                                death_immun = 0.05,
+                                repro_rate = 0.2,
+                                mut_std = 1.0,
+                                show = True)
+
+    write_in_txt(final_points, fname = "test_gen_1.txt")
