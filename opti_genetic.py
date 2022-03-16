@@ -1,65 +1,16 @@
 # from logging.handlers import WatchedFileHandler
 #from SouffleBati2D import *
 # from costfunction import cost_function
-from is_inside import is_inside as is_inside_poly
+
+from buildings_data import BAT_list, SENSORS_list
+from is_inside import is_inside_bat
+from plot_gen_data import *
+from read_write_gen_data import *
+
 import random
 import numpy as np
 from math import sqrt, exp, pi
-import matplotlib.pyplot as plt
-
-
-### PAS = 0.4 => environ 1min de simulation
-# CAS_SB2D(NOM, AMR, PAS, M_TNT, TPS_F, XC, YC)
-# launch_run("")
-
-
-### 0 - MAP FEATURES
-
-Bat1 = [(10.08,10.223),
-        (30.08,10.223),
-        (30.08,15.223),
-        (17.08,15.223),
-        (17.08,25.223),
-        (10.08,25.223)]
-
-Bat2 = [(50.08,12.223),
-        (65.08,12.223),
-        (65.08,27.223),
-        (50.08,27.223)]
-
-Bat3 = [(80.08,32.223),
-        (87.08,32.223),
-        (87.08,57.223),
-        (80.08,57.223)]
-
-Bat4 = [(12.08,78.223),
-        (42.08,78.223),
-        (42.08,92.223),
-        (12.08,92.223)]
-
-Bat5 = [(75,70),
-        (85,80),
-        (90,75),
-        (96,81),
-        (0.5*167,0.5*187),
-        (0.5*135,0.5*155)]
-
-Bat6 = [(20.08,40.223),
-        (40.08,40.223),
-        (40.08,45.223),
-        (25.08,45.223),
-        (25.08,55.223),
-        (35.08,55.223),
-        (35.08,70.223),
-        (20.08,70.223)]
-
-Bat_list = [Bat1,Bat2,Bat3,Bat4,Bat5,Bat6]
-
-Sensors_list = [(12.82,33.83),
-                (42.21,95.27),
-                (85.95,65.66),
-                (92.13,53.32),
-                (61.87,31.51)]
+# import matplotlib.pyplot as plt
 
 
 ### 1 - BASIC FEATURES
@@ -79,47 +30,6 @@ def eval_solution(x,y,id=0):
     x -= 30 ; y -= 50
     f_x = 1 - np.exp(-0.0005*(x*x + y*y)) # / sqrt(2*pi)
     return(f_x)
-
-
-def show_3D(f, points_series, dx, dy, z_level, bat_list=Bat_list, colors=['red','blue','green','gray']):
-    ## Compute values
-    X, Y = np.meshgrid(np.linspace(0, 100, 50), np.linspace(0, 100, 50))
-    Z = f(X,Y)
-
-    ## Plot 2D shape
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.contour3D(X, Y, Z, 50, cmap='binary')
-    # ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-
-    ## Plot bat
-    if bat_list != None:
-        for i in range(len(Bat_list)):
-            the_bat = Bat_list[i] ; the_bat.append(Bat_list[i][0])
-            for k in range(0,len(the_bat)-1):
-                ax.plot([the_bat[k][0]-dx,the_bat[k+1][0]-dx], [the_bat[k][1]-dy,the_bat[k+1][1]-dy], z_level, 'k-')
-
-    ## Plot points
-    for snum in range(0,len(points_series)):
-        series = points_series[snum]
-        for (x,y,z) in series:
-            ax.scatter(x-dx,y-dy, z_level, color=colors[snum])
-
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-    plt.show()
-    # ax.view_init(60, 35)
-    # fig
-
-
-def is_inside_bat(x, bat_list):
-    """ Checks if point x is inside a bat defined in bat_list or not. """
-    is_inside_bat = False ; i = 0
-    while not(is_inside_bat) and i<len(bat_list):
-        is_inside_bat = is_inside_poly(x, bat_list[i])
-        i += 1
-    return(is_inside_bat)
 
 
 def get_random_pt(map_size,bat_list):
@@ -238,11 +148,11 @@ def init_gen_algo(n, map_size, bat_list):
 
 ### 5 - GENETIC ALGORITHM
 
-def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False):
+def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False, savefile=None):
     """ Runs an optimization process on a map with buildings using a genetic method. """
 
-    data_init, pt_ID = init_gen_algo(n_pts, map_size, bat_list) # ; print("DATA",data)
-    data = data_init
+    data, pt_ID = init_gen_algo(n_pts, map_size, bat_list) # ; print("DATA",data)
+    data_history = [list(data)]
 	
     for gen_k in range(n_gen):
         if show:
@@ -257,47 +167,31 @@ def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immu
         data = kill_some_pts(data, death_rate, death_immun) # data is still sorted regarding the 3rd component of each elt
         if show:
             print( "> DEATH : {0} individuals - BEST = {1}".format(len(data),data[0]) )
-
-    if show:
-        show_3D(eval_solution, dx=30, dy=50, z_level=0, points_series=[data_init,data])
+        
+        data_history.append(list(data))
+    
+    # if show:
+      #  plot_3D(eval_solution, dx=30, dy=50, z_level=0, points_series=[data])
+    
+    if savefile != None:
+        write_in_txt(data_history, fname=savefile)
 
     return(data)
 
 
-### 6 - WRITE/READ DATA
-
-def write_in_txt(d,fname):
-    f = open("gen_data/" + fname, "w")
-    for (ax,ay,cost_a) in d:
-        f.write("{0};{1};{2}\n".format(ax,ay,cost_a))
-    f.close()
-
-def read_in_txt(fname):
-    d = []
-    f = open("gen_data/" + fname, "r")
-    txt_lines = f.read().split("\n")
-    for line in txt_lines:
-        if len(line)>0:
-            elts = line.split(";")
-            d.append( (float(elts[0]),float(elts[1]),float(elts[2])) )
-        else:
-            print("EMPTY LINE FOUND...")
-    f.close()
-    return(d)
-
-
 ### 6 - LAUNCH !
 
-if 1 and __name__ == "__main__":
+if 0 and __name__ == "__main__":
 
     final_points = genetic_algo(map_size = 100,
-                                bat_list = Bat_list,
+                                bat_list = BAT_list,
                                 n_pts = 50,
                                 n_gen = 20,
                                 death_rate = 0.1,
                                 death_immun = 0.05,
                                 repro_rate = 0.2,
                                 mut_std = 1.0,
-                                show = True)
+                                show = False,
+                                savefile = "test_gen_1.txt")
 
-    write_in_txt(final_points, fname = "test_gen_1.txt")
+plot_3D(eval_solution, "test_gen_1.txt", dx=30, dy=50, z_level=0, bat_list=BAT_list)

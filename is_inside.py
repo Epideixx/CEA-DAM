@@ -20,6 +20,7 @@ def intersect(point,x1,x2):
 
         return (point[1]-b)/a > point[0]
 
+
 def is_inside(point, poly):
     nb_intersect = 0
     for i in range(0, len(poly)) :
@@ -29,3 +30,12 @@ def is_inside(point, poly):
         elif intersect(point, poly[i], poly[i+1]):
             nb_intersect+=1
     return not(nb_intersect%2 == 0)
+
+
+def is_inside_bat(x, bat_list):
+    """ Checks if point x is inside a bat defined in bat_list or not. """
+    is_inside_bat = False ; i = 0
+    while not(is_inside_bat) and i<len(bat_list):
+        is_inside_bat = is_inside(x, bat_list[i])
+        i += 1
+    return(is_inside_bat)
