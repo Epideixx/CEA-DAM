@@ -16,11 +16,12 @@ def read_in_txt(fname):
     txt_lines = f.read().split("\n")
     for line in txt_lines:
         if len(line)>0:
-            if (line[0] == ">"): # new generation
-                dhist.append(np.array(gen_data)) ; gen_data = [[],[],[]]
-            else:
-                elts = line.split(";")
-                for i in [0,1,2]:
-                    gen_data[i].append(float(elts[i]))
+            if line[0] != "#": # caractere de commentaires
+                if (line[0] == ">"): # new generation
+                    dhist.append(np.array(gen_data)) ; gen_data = [[],[],[]]
+                else:
+                    elts = line.split(";")
+                    for i in [0,1,2]:
+                        gen_data[i].append(float(elts[i]))
     f.close()
     return(dhist[1:])

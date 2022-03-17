@@ -25,11 +25,19 @@ def eval_solution(XS, YS, id):
     return(cost_function(CAS_folder_name))
 '''
 
-def eval_solution(x,y,id=0):
+PARAM = np.array([ [50.0,  50.0, 0.001,  -1.0,  1.0],
+                   [22.0,  20.0,  0.01,  3.0,  1.0],
+                   [88.0,  78.0, 0.003,  2.0,  10.0],
+                   [90.0,  20.0,  0.01,  1.0,  -1.0],
+                   [30.0,  75.0, 0.008,  1.2,  0.0] ]) # [px,py,in_scale,out_scale,out_offset]
+
+
+def eval_solution(x, y, id=None):
     """ Toy example """
-    x -= 30 ; y -= 50
-    f_x = 1 - np.exp(-0.0005*(x*x + y*y)) # / sqrt(2*pi)
-    return(f_x)
+    fx = 0.0
+    for i in range(PARAM.shape[0]):
+        fx += PARAM[i,4] - (PARAM[i,3] * np.exp( -PARAM[i,2] * ( (x-PARAM[i,0])*(x-PARAM[i,0]) + (y-PARAM[i,1])*(y-PARAM[i,1]) )))
+    return(fx)
 
 
 def get_random_pt(map_size,bat_list):
@@ -135,23 +143,33 @@ def kill_some_pts(pts, dr, di):
 
 ### 4 - INITIALIZATION
 
-def init_gen_algo(n, map_size, bat_list):
+def init_gen_algo(n, map_size, bat_list, corner_pts=False):
     """ Gets n random points to initialize the genetic algo. """
     data = [] ; pt_ID = 0
-    for k in range(n):
+
+    if corner_pts and (n<4):
+        raise Exception("ERROR : n={0} not sufficient when considering 8 points on boundaries".format(n))
+
+    if corner_pts:
+        for (ax,ay) in [(0.0,0.0),(0.0,100.0),(100.0,0.0),(100.0,100.0)]: # corner points
+            data.append( (ax, ay, eval_solution(ax,ay,pt_ID)) ) ; pt_ID += 1
+    else: # corner_pts = False
+        n += 4
+
+    for k in range(n-4):
         (ax,ay) = get_random_pt(map_size,bat_list)
-        data.append( (ax, ay, eval_solution(ax,ay,pt_ID)) )
-        pt_ID += 1
+        data.append( (ax, ay, eval_solution(ax,ay,pt_ID)) ) ; pt_ID += 1
+
     data = sorted(data, key = lambda u : u[2])
     return(data,pt_ID)
 
 
 ### 5 - GENETIC ALGORITHM
 
-def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False, savefile=None):
+def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False, savefile=None):
     """ Runs an optimization process on a map with buildings using a genetic method. """
 
-    data, pt_ID = init_gen_algo(n_pts, map_size, bat_list) # ; print("DATA",data)
+    data, pt_ID = init_gen_algo(n_pts, map_size, bat_list, corner_pts) # ; print("DATA",data)
     data_history = [list(data)]
 	
     for gen_k in range(n_gen):
@@ -165,6 +183,8 @@ def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immu
 
         # DEATH
         data = kill_some_pts(data, death_rate, death_immun) # data is still sorted regarding the 3rd component of each elt
+        if len(data) == 0:
+            raise Exception("> ALL DEAD...")
         if show:
             print( "> DEATH : {0} individuals - BEST = {1}".format(len(data),data[0]) )
         
@@ -181,17 +201,18 @@ def genetic_algo(map_size, bat_list, n_pts, n_gen=10, death_rate=0.1, death_immu
 
 ### 6 - LAUNCH !
 
-if 0 and __name__ == "__main__":
+if 1 and __name__ == "__main__":
 
     final_points = genetic_algo(map_size = 100,
                                 bat_list = BAT_list,
                                 n_pts = 50,
+                                corner_pts = True,
                                 n_gen = 20,
-                                death_rate = 0.1,
+                                death_rate = 0.4,
                                 death_immun = 0.05,
-                                repro_rate = 0.2,
+                                repro_rate = 0.5,
                                 mut_std = 1.0,
-                                show = False,
-                                savefile = "test_gen_1.txt")
+                                show = True,
+                                savefile = "test_gen.txt")
 
-plot_3D(eval_solution, "test_gen_1.txt", dx=30, dy=50, z_level=0, bat_list=BAT_list)
+plot_3D(eval_solution, "test_gen.txt", map_level=8.0, bat_list=BAT_list)
