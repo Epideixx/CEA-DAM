@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import csv
 import argparse
 import os
+import pandas as pd
+from without_building import first_spike
+
 COLORS = ['blue','red','green','orange','purple','grey']
 
 parser = argparse.ArgumentParser(description="retrieve file name")
@@ -16,11 +19,11 @@ nb_stations = 5
 # fig,axs = plt.subplots(nb_stations, sharey = True)
 data_t = [[] for i in range(nb_stations)]
 data_sign = [[] for i in range(nb_stations)]
+spikes = []
 
 for index in range(nb_stations):
     file_name = os.path.join(args.folder,"STATION_ST" + str(index))
 
-    
 
     data = open(file_name,'r')
     
@@ -33,14 +36,21 @@ for index in range(nb_stations):
             data_sign[index].append(float(row[1]))
         else:
             first = False
+
+    data_spike = pd.read_csv(file_name, sep = " ", index_col=False)   
+    spikes.append(first_spike(sensor_data=data_spike))
     data.close()
 
 for i in range(nb_stations):
     # axs[i].plot(data_t[i],data_sign[i])
     plt.plot(data_t[i], data_sign[i], color=COLORS[i])
+<<<<<<< HEAD
 plt.xlabel("Time (s)")
 plt.ylabel("Pression (Pa)")
 plt.title()
+=======
+    plt.scatter(spikes[i], 100000, color=COLORS[i])
+>>>>>>> Global
 plt.show()
 
 
