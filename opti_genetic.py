@@ -121,7 +121,7 @@ def create_children(d, rr, mut_std, pt_ID, map_size, bat_list):
         i1 = index.pop() ; i2 = index.pop()
         d = smart_insert(d, get_a_child(d[i1], d[i2], mut_std, map_size, bat_list), pt_ID)
         pt_ID += 1
-    return(d, pt_ID)
+    return(d, pt_ID, n_children)
 
 
 ### 3 - DEATH FEATURES
@@ -166,18 +166,36 @@ def init_gen_algo(n, map_size, bat_list, corner_pts=False):
 
 ### 5 - GENETIC ALGORITHM
 
-def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False, savefile=None):
-    """ Runs an optimization process on a map with buildings using a genetic method. """
+def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False, savemode="auto", savefile=None, resumefile=None):
+    """ Runs an optimization process on a map with buildings using a genetic method. 
+        - corner_pts : <bool> (add one initial pt at each corner of the map = 4 pts)
+        - show : <bool> (show the execution of the algo with prints in the shell)
+        - savemode : "auto" (save gen n before computing gen n+1) | "end" (save all gen at the end) 
+        - savefile : <str> (name of the save file) 
+        - resumefile : <str> (run gen algo from data in the file resume)"""
 
-    data, pt_ID = init_gen_algo(n_pts, map_size, bat_list, corner_pts) # ; print("DATA",data)
-    data_history = [list(data)]
-	
-    for gen_k in range(n_gen):
+    if resumefile == None:
+        data, pt_ID = init_gen_algo(n_pts, map_size, bat_list, corner_pts) # ; print("DATA",data)
+        data_history = [list(data)]
+    else:
+        data_history = read_in_txt(resumefile) # fetch gen data from resumefile
+        data = []
+        for k in range(0,data_history[-1].shape[1]): # transform last gen from numpy to triplet list
+            data.append( (data_history[-1][0,k], data_history[-1][1,k], data_history[-1][2,k]) )
+        restart_gen = len(data_history)+1
+        savemode = "auto" ; savefile = resumefile ; pt_ID = 0
+
+    gen_k = 0 ; NB_SIM = len(data)
+    while gen_k < n_gen:
+        if (resumefile != None) and (gen_k == 0): # restart from a given gen and parameters for the simulation
+            gen_k = restart_gen
+
         if show:
             print( "\n### Generation {0}".format(gen_k+1) )
 
         # REPRODUCTION
-        data, pt_ID = create_children(data, repro_rate, mut_std, pt_ID, map_size, bat_list) # data is still sorted regarding the 3rd component of each elt
+        data, pt_ID, delta_SIM = create_children(data, repro_rate, mut_std, pt_ID, map_size, bat_list) # data is still sorted regarding the 3rd component of each elt
+        NB_SIM += delta_SIM
         if show:
             print( "> REPRODUCTION : {0} individuals - BEST = {1}".format(len(data),data[0]) )
 
@@ -187,14 +205,23 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
             raise Exception("> ALL DEAD...")
         if show:
             print( "> DEATH : {0} individuals - BEST = {1}".format(len(data),data[0]) )
+            print("[nb sim = {0}]".format(delta_SIM))
         
         data_history.append(list(data))
+        if savemode == "auto":
+            append_in_txt(data,gen_k,fname=savefile)
+        
+        if len(data) == 1: # only one individual left
+            print("\n> STOP ALGO : Only 1 individual left in GENERATION {0}.".format(gen_k+1))
+            gen_k = n_gen
+        
+        gen_k += 1
     
-    # if show:
-      #  plot_3D(eval_solution, dx=30, dy=50, z_level=0, points_series=[data])
-    
-    if savefile != None:
+    if savemode == "end":
         write_in_txt(data_history, fname=savefile)
+
+    if show:
+        print("\n=> NB SIMULATIONS = {0}".format(NB_SIM))
 
     return(data)
 
@@ -205,14 +232,16 @@ if 1 and __name__ == "__main__":
 
     final_points = genetic_algo(map_size = 100,
                                 bat_list = BAT_list,
-                                n_pts = 50,
+                                n_pts = 40, # 40
                                 corner_pts = True,
-                                n_gen = 20,
-                                death_rate = 0.4,
-                                death_immun = 0.05,
-                                repro_rate = 0.5,
-                                mut_std = 1.0,
+                                n_gen = 20, # 20
+                                death_rate = 0.25, # 25
+                                death_immun = 0.05, # 5
+                                repro_rate = 0.25, # 25
+                                mut_std = 3.0,
                                 show = True,
-                                savefile = "test_gen.txt")
+                                savemode = "auto",
+                                savefile = "test_gen.txt",
+                                resumefile = None) #"test_gen.txt")
 
-plot_3D(eval_solution, "test_gen.txt", map_level=8.0, bat_list=BAT_list)
+# plot_3D(eval_solution, "test_gen.txt", map_level=8.0, bat_list=BAT_list)
