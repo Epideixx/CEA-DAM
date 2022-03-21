@@ -2,7 +2,6 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import csv
 import argparse
-
 #from scipy import signal as sgn
 
 deltaT = 9.03696114115064 * 1e-5
