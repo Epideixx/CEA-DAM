@@ -153,17 +153,19 @@ def displayMatch(sig1, sig2, derivative=False):
     path = getPath(a)
     K = len(path)
     m = len(sig2)
-    print('warping', (K-m)/m)
+    #print('warping', (K-m)/m)
 
-    for k in range(K):
-        i = path[k, 0]
-        j = path[k, 1]
-        plt.plot([sig1[i, 0], sig2[j, 0]], (sig1[i, 1], sig2[j, 1]),
-                 color='blue')
+    #for k in range(K):
+    #    i = path[k, 0]
+    #    j = path[k, 1]
+        #plt.plot([sig1[i, 0], sig2[j, 0]], (sig1[i, 1], sig2[j, 1]),
+    #             color='blue')
+    
+    #plt.plot(sig1[:, 0], sig1[:, 1], color='red')
+    #plt.plot(sig2[:, 0], sig2[:, 1], color='red')
+    #plt.show()
 
-    plt.plot(sig1[:, 0], sig1[:, 1], color='red')
-    plt.plot(sig2[:, 0], sig2[:, 1], color='red')
-    plt.show()
+    return path
 
 
 #displayMatch(sig1, sig2)

@@ -4,6 +4,8 @@ import csv
 import argparse
 from scipy import signal as sgn
 
+from fonctionCoutPierre.differentialTimeWarping import displayMatch
+
 deltaT = 9.03696114115064 * 1e-5
 nb_stations = 6
 
@@ -244,7 +246,7 @@ def createDelay(sigArray, delay):
     return sigArrayDelayed
 
 
-sigArray60Delayed = createDelay(signalArray60, -30)
+#sigArray60Delayed = createDelay(signalArray60, -30)
 # a, b = removeDelay(signalArray60, sigArray60Delayed)
 
 
@@ -260,14 +262,24 @@ def cout(sigArray1, sigArray2):
     sigArray1NoDelay, sigArray2NoDelay = removeDelay(
         sigArray1, sigArray2)
 
-    interArray, autoArray, lags = correlationSignals(
-        sigArray1NoDelay, sigArray2NoDelay)
+    #interArray, autoArray, lags = correlationSignals(
+    #    sigArray1NoDelay, sigArray2NoDelay)
 
-    dist = compareCorr(interArray, autoArray, lags)
+    #dist = compareCorr(interArray, autoArray, lags)
+
+    path = displayMatch(sigArray1,sigArray2)
+
+    dist = 0
+
+    for couple in path:
+        (i,j) = couple
+
+        dist += (deltat*(i-j))**2 + (sigArray1[i] - sigArray2[j])**2 
+
 
     return dist
 
 
-dist = cout(signalArray60, signalArray40)
-dist = cout(signalArray60, signalArray55)
-dist = cout(signalArray60, sigArray60Delayed)
+#dist = cout(signalArray60, signalArray40)
+#dist = cout(signalArray60, signalArray55)
+#dist = cout(signalArray60, sigArray60Delayed)
