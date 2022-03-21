@@ -1,8 +1,8 @@
 import numpy as np
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import csv
 import argparse
-from scipy import signal as sgn
+#from scipy import signal as sgn
 
 deltaT = 9.03696114115064 * 1e-5
 nb_stations = 6
@@ -30,11 +30,11 @@ def getData(folder):
                 first = False
         data.close()
 
-    #for i in range(nb_stations):
+    # for i in range(nb_stations):
         # axs[i].plot(data_t[i], data_sign[i])
-    #    plt.plot(data_t[i], data_sign[i], label='station' + str(i))
-    #    plt.legend()
-    #plt.show()
+        # plt.plot(data_t[i], data_sign[i], label='station' + str(i))
+        # plt.legend()
+    # plt.show()
 
     signalArray = np.empty((nb_stations, len(data_t[0]), 2))
 
@@ -51,11 +51,17 @@ signalArray40 = getData('TEexplo40')
 signalArray55 = getData('TEexplo55')
 
 
+def correlation_lags(N):
+    l = [i for i in range(N)]
+    lm = reversed([i+1 for i in range(N-1)])
+    return lm + l
+
+
 def correlationSignals(signalArray1, signalArray2):
     # Calcul les intercorrelations des signaux reçus stations par stations
     # Renvoi aussi les autocorrelation du signal1 considéré comme le signal d'origine
 
-    #fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
+    # fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
 
     sig1k = signalArray1[0]
     sig2k = signalArray2[0]
@@ -65,7 +71,7 @@ def correlationSignals(signalArray1, signalArray2):
     # Car pour deux explosions différentes, les signaux ne seront pas de la même longueur.
 
     lags = deltaT * \
-        sgn.correlation_lags(N, N)
+        correlation_lags(N)
     # Calcul des retards dans les corrélations
 
     L = len(lags)
@@ -78,23 +84,25 @@ def correlationSignals(signalArray1, signalArray2):
         sig1k = signalArray1[k, :N]
         sig2k = signalArray2[k, :N]
 
-        interCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig2k[:, 1]))
-        autoCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig1k[:, 1]))
+        interCorr = np.correlate(np.abs(sig1k[:, 1]), np.abs(sig2k[:, 1]))
+        autoCorr = np.correlate(np.abs(sig1k[:, 1]), np.abs(sig1k[:, 1]))
 
-        #axs[k, 0].plot(
+        # axs[k, 0].plot(
         #    lags, interCorr, label='correlation entre les signaux de la station' + str(k))
-        #axs[k, 0].legend()
+        # axs[k, 0].legend()
 
-        #axs[k, 1].plot(sig1k[:, 0], sig1k[:, 1],
-                       label='signal 60 station' + str(k))
-        #axs[k, 1].plot(sig2k[:, 0], sig2k[:, 1],
-                       label='signal 50 station' + str(k))
-        #axs[k, 1].legend()
+        # axs[k, 1].plot(sig1k[:, 0], sig1k[:, 1],
+        # label = 'signal 60 station' + str(k))
+        # axs[k, 1].plot(sig2k[:, 0], sig2k[:, 1],
+        # label='signal 50 station' + str(k))
+        # axs[k, 1].legend()
 
         interCorrArray[k, :] = interCorr
         autoCorrArray[k, :] = autoCorr
+    #axs[0, 0].legend()
+    #axs[0, 1].legend()
 
-    plt.show()
+    # plt.show()
     return interCorrArray, autoCorrArray, lags
 
 
@@ -106,15 +114,15 @@ def compareCorr(interCorrArray, autoCorrArray, lags):
     corrDifference = interCorrArray - autoCorrArray
     distanceCorr = np.sum(np.linalg.norm(corrDifference, axis=1))
 
-    #fig, axs = plt.subplots(nrows=nb_stations, sharex=True)
+    # fig, axs = plt.subplots(nrows=nb_stations, sharex=True)
 
-    #for k in range(nb_stations):
+    # for k in range(nb_stations):
     #
     #    axs[k].plot(lags, corrDifference[k],
     #                label='différence de corrélations pour la station' + str(k))
     #    axs[k].legend()
 
-    #plt.show()
+    # plt.show()
     print(np.sum(distanceCorr))
     return np.sum(distanceCorr)
 
@@ -131,6 +139,7 @@ def getDelay(signal1Stat1, signal2Stat1):
     sig2 = signal2Stat1[:, 1]
     firstMax1 = np.argmax(sig1 > 1000)
     firstMax2 = np.argmax(sig2 > 1000)
+
     delay = firstMax1 - firstMax2
     # le retard est calculé en terme d'indice de liste
     # On utilise un seuil d'une valeur de 1000 Pascal pour déterminer l'indice de début d'un signal
@@ -183,15 +192,15 @@ def removeDelay(sigArray1, sigArray2):
             sigArrayNoDelay1[k, :, 0] = time
             sigArrayNoDelay2[k, :, 0] = time'''
 
-    #fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
+    # fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
     # On affiche les signaux récalés par rapport aux signaux décalés
     #   for k in range(nb_stations):
     #       sig1NoDelayk = sigArrayNoDelay1[k, :, 1]
     #       sig2NoDelayk = sigArrayNoDelay2[k, :, 1]
-    #    
+    #
     #       sig1k = sigArray1[k, :N, 1]
     #       sig2k = sigArray2[k, :N, 1]
-    # 
+    #
     #       axs[k, 0].plot(time, sig1NoDelayk, label='No Delay')
     #       axs[k, 0].plot(time, sig2NoDelayk)
     #       axs[k, 0].legend()
@@ -199,7 +208,7 @@ def removeDelay(sigArray1, sigArray2):
     #       axs[k, 1].plot(time, sig1k, label='delay')
     #       axs[k, 1].plot(time, sig2k)
     #       axs[k, 1].legend()
-    # 
+    #
     #   plt.show()
     return sigArrayNoDelay1, sigArrayNoDelay2
 
@@ -231,7 +240,7 @@ def createDelay(sigArray, delay):
             sigArrayDelayed[k, :, 0] = sigArray[k, :, 0]
             # si c'est une avance on fait un autre décalage
 
-    fig, axs = plt.subplots(nrows=nb_stations)
+    '''fig, axs = plt.subplots(nrows=nb_stations)
     # On affiche les signaux originaux et retardés/Avancés
 
     for k in range(nb_stations):
@@ -240,11 +249,12 @@ def createDelay(sigArray, delay):
         axs[k].plot(sigArray[k, :, 0], sigArray[k, :, 1], label='original')
         axs[k].legend()
 
-    plt.show()
+    plt.show()'''
     return sigArrayDelayed
 
 
 sigArray60Delayed = createDelay(signalArray60, -30)
+
 # a, b = removeDelay(signalArray60, sigArray60Delayed)
 
 
@@ -268,6 +278,65 @@ def cout(sigArray1, sigArray2):
     return dist
 
 
-dist = cout(signalArray60, signalArray40)
-dist = cout(signalArray60, signalArray55)
-dist = cout(signalArray60, sigArray60Delayed)
+# dist = cout(signalArray60, signalArray40)
+# dist = cout(signalArray60, signalArray55)
+# dist = cout(signalArray60, sigArray60Delayed)
+
+
+def normalize(signal):
+    norm = np.linalg.norm(signal[:, 1])
+    signal[:, 1] /= norm
+
+
+def coutMaxCorrelation(sigArray1, sigArray2):
+    for k in range(nb_stations):
+        normalize(sigArray1[k])
+        normalize(sigArray2[k])
+    #fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
+
+    sig1k = sigArray1[0]
+    sig2k = sigArray2[0]
+
+    N = np.min((len(sig1k), len(sig2k)))
+    # On prend la taille minimale des signaux pour tronquer les autres signaux
+    # Car pour deux explosions différentes, les signaux ne seront pas de la même longueur.
+
+    lags = deltaT * \
+        sgn.correlation_lags(N, N)
+    # Calcul des retards dans les corrélations
+
+    L = len(lags)
+
+    # On initialise les tableaux d'intercorrélations et d'autocorrélations
+
+    maxCorrelations = np.empty(nb_stations)
+
+    for k in range(nb_stations):
+        sig1k = sigArray1[k, :N]
+        sig2k = sigArray2[k, :N]
+
+        interCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig2k[:, 1]))
+
+        '''axs[k, 0].plot(
+            lags, interCorr, label='correlation entre les signaux de la station ' + str(k))
+        axs[k, 0].legend()
+
+        axs[k, 1].plot(sig1k[:, 0], sig1k[:, 1],
+                       label='signal original station ' + str(k))
+        axs[k, 1].plot(sig2k[:, 0], sig2k[:, 1],
+                       label='signal autre explosion station ' + str(k))
+        axs[k, 1].legend()'''
+
+        maxCorrelations[k] = np.max(interCorr)
+    cost = 1 - np.mean(maxCorrelations)
+    # plt.show()
+    print(cost)
+
+
+# coutMaxCorrelation(signalArray60, signalArray40)
+# coutMaxCorrelation(signalArray60, signalArray55)
+# coutMaxCorrelation(signalArray60, sigArray60Delayed)
+
+
+displayMatch(sigArray60Delayed[0], signalArray60[0])
+displayMatch(sigArray60Delayed[0], signalArray60[0], derivative=True)
