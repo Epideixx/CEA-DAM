@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import csv
 import argparse
 from scipy import signal as sgn
+from differentialTimeWarping import displayMatch, costDDTW
 
 deltaT = 9.03696114115064 * 1e-5
 nb_stations = 6
@@ -34,7 +35,7 @@ def getData(folder):
         # axs[i].plot(data_t[i], data_sign[i])
         plt.plot(data_t[i], data_sign[i], label='station' + str(i))
         plt.legend()
-    plt.show()
+    # plt.show()
 
     signalArray = np.empty((nb_stations, len(data_t[0]), 2))
 
@@ -44,11 +45,6 @@ def getData(folder):
 
     signalArray[:, :, 1] -= 1e5
     return signalArray
-
-
-signalArray60 = getData("TE6StatLoS")
-signalArray40 = getData('TEexplo40')
-signalArray55 = getData('TEexplo55')
 
 
 def correlationSignals(signalArray1, signalArray2):
@@ -244,7 +240,6 @@ def createDelay(sigArray, delay):
     return sigArrayDelayed
 
 
-sigArray60Delayed = createDelay(signalArray60, -30)
 # a, b = removeDelay(signalArray60, sigArray60Delayed)
 
 
@@ -268,6 +263,14 @@ def cout(sigArray1, sigArray2):
     return dist
 
 
-dist = cout(signalArray60, signalArray40)
-dist = cout(signalArray60, signalArray55)
-dist = cout(signalArray60, sigArray60Delayed)
+#dist = cout(signalArray60, signalArray40)
+#dist = cout(signalArray60, signalArray55)
+#dist = cout(signalArray60, sigArray60Delayed)
+
+
+signalArray60 = getData("TE6StatLoS")
+signalArray40 = getData('TEexplo40')
+signalArray55 = getData('TEexplo55')
+sigArray60Delayed = createDelay(signalArray60, 30)
+displayMatch(signalArray60[0], signalArray55[0])
+displayMatch(signalArray60[0], signalArray55[0], derivative=True)
