@@ -2,7 +2,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 import csv
 import argparse
-from scipy import signal as sgn
+#from scipy import signal as sgn
 
 deltaT = 9.03696114115064 * 1e-5
 nb_stations = 6
@@ -51,6 +51,12 @@ signalArray40 = getData('TEexplo40')
 signalArray55 = getData('TEexplo55')
 
 
+def correlation_lags(N):
+    l = [i for i in range(N)]
+    lm = reversed([i+1 for i in range(N-1)])
+    return lm + l
+
+
 def correlationSignals(signalArray1, signalArray2):
     # Calcul les intercorrelations des signaux reçus stations par stations
     # Renvoi aussi les autocorrelation du signal1 considéré comme le signal d'origine
@@ -65,7 +71,7 @@ def correlationSignals(signalArray1, signalArray2):
     # Car pour deux explosions différentes, les signaux ne seront pas de la même longueur.
 
     lags = deltaT * \
-        sgn.correlation_lags(N, N)
+        correlation_lags(N)
     # Calcul des retards dans les corrélations
 
     L = len(lags)
@@ -78,8 +84,8 @@ def correlationSignals(signalArray1, signalArray2):
         sig1k = signalArray1[k, :N]
         sig2k = signalArray2[k, :N]
 
-        interCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig2k[:, 1]))
-        autoCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig1k[:, 1]))
+        interCorr = np.correlate(np.abs(sig1k[:, 1]), np.abs(sig2k[:, 1]))
+        autoCorr = np.correlate(np.abs(sig1k[:, 1]), np.abs(sig1k[:, 1]))
 
         #axs[k, 0].plot(
         #    lags, interCorr, label='correlation entre les signaux de la station' + str(k))

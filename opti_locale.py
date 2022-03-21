@@ -25,7 +25,7 @@ def greedy_search(X0, Y0, grid_step):
 
     # Get neighbours
     
-	neighborhood = get_neighbours(XYbest[0], XY_best[1], grid_step)
+	neighborhood = get_neighbours(XYbest[0], XYbest[1], grid_step)
 
 	k = 0 ; kmax = 10
 	is_new_sol = True
