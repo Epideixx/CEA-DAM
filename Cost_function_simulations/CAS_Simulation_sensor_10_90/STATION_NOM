@@ -1,0 +1,10 @@
+# Nombre de stations fixes
+5
+# Noms des stations fixes
+ST0 12.82 33.83
+ST1 42.21 95.27
+ST2 85.95 65.66
+ST3 92.13 53.32
+ST4 61.87 31.51
+# Noms des scalaires associes aux stations fixes
+pmat
