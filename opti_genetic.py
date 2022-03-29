@@ -33,7 +33,8 @@ PARAM = np.array([ [50.0,  50.0, 0.001,  -1.0,  1.0],
 
 
 def eval_solution(x, y, id=None):
-    """ Toy example """
+    """ Evaluate quality of a source point (x,y). id is used to get a unique ID for the files
+        from the CEA simulation. """
     fx = 0.0
     for i in range(PARAM.shape[0]):
         fx += PARAM[i,4] - (PARAM[i,3] * np.exp( -PARAM[i,2] * ( (x-PARAM[i,0])*(x-PARAM[i,0]) + (y-PARAM[i,1])*(y-PARAM[i,1]) )))
@@ -228,7 +229,7 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
 
 ### 6 - LAUNCH !
 
-if 1 and __name__ == "__main__":
+if 0 and __name__ == "__main__":
 
     final_points = genetic_algo(map_size = 100,
                                 bat_list = BAT_list,
@@ -244,4 +245,4 @@ if 1 and __name__ == "__main__":
                                 savefile = "test_gen.txt",
                                 resumefile = None) #"test_gen.txt")
 
-# plot_3D(eval_solution, "test_gen.txt", map_level=8.0, bat_list=BAT_list)
+plot_3D(eval_solution, None, map_level=8.0, bat_list=BAT_list)
