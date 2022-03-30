@@ -15,7 +15,7 @@ def getData(folder):
     data_sign = [[] for i in range(nb_stations)]
 
     for index in range(nb_stations):
-        file_name = "./" + folder + "/STATION_ST" + str(index)
+        file_name = "./" + folder + "/STATION_ST/POST1D/TE" + str(index)
 
         data = open(file_name, 'r')
 

@@ -65,4 +65,4 @@ def benchmark(n_exec = 20, pset = PSET, src = None):
 
 # Launch benchmark
 
-centroid_pts, best_pts = benchmark(n_exec=10, src=(22,20))
+centroid_pts, best_pts = benchmark(n_exec=50, src=(22,20))
