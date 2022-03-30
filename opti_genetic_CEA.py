@@ -13,6 +13,8 @@ from math import sqrt, exp, pi
 # import matplotlib.pyplot as plt
 import os
 import shutil
+from concurrent.futures import ThreadPoolExecutor
+
 
 # ---- Module for CEA ----
 from Simulation2D import main
@@ -138,6 +140,10 @@ def smart_insert(l,elt,id, step_size = 0.4, repertory = "Genetic"):
             switch = False
     return(l)
 
+def smart_insert_multithread(elt,id, step_size = 0.4, repertory = "Genetic"):
+    elt_cost = eval_solution(elt[0],elt[1],id, step_size= step_size, repertory = repertory)
+    return (elt[0],elt[1],elt_cost)
+
 
 def get_a_child(a, b, std, map_size, bat_list):
     """ Creates a child from two parents a and b. The default child is the mean of a and b + mutation.
@@ -162,15 +168,30 @@ def get_a_child(a, b, std, map_size, bat_list):
     return(mutate_pt(child_pt, std, bat_list)) # return a mutant from the valid child_pt
 
 
-def create_children(d, rr, mut_std, pt_ID, map_size, bat_list, step_size=0.4, repertory="Genetic"):
+def create_children(d, rr, mut_std, pt_ID, map_size, bat_list, step_size=0.4, repertory="Genetic", multithreading = False):
     """ Creates a number a children equals to r% the initial population d. Keeps the order in list d. """
     n_children = int(rr*len(d))
     index = [j for j in range(len(d))]
     random.shuffle(index)
-    for k in range(n_children):
-        i1 = index.pop() ; i2 = index.pop()
-        d = smart_insert(d, get_a_child(d[i1], d[i2], mut_std, map_size, bat_list), pt_ID, step_size=step_size, repertory=repertory)
-        pt_ID += 1
+    pt_ID_init = pt_ID
+    if multithreading:
+        in_simu = {}
+        executor = ThreadPoolExecutor(max_workers=4)
+        for k in range(n_children):
+            i1 = index.pop() ; i2 = index.pop()
+            in_simu[pt_ID] = executor.submit(smart_insert_multithread, d, get_a_child(d[i1], d[i2], mut_std, map_size, bat_list), pt_ID,step_size,repertory)
+            pt_ID += 1
+        pt_ID = pt_ID_init
+        d = []
+        for k in range(n_children):
+            d.append(in_simu[pt_ID].result())
+            pt_ID += 1
+        d = sorted(d, key = lambda x : x[2])
+    else :
+        for k in range(n_children):
+            i1 = index.pop() ; i2 = index.pop()
+            d = smart_insert(d, get_a_child(d[i1], d[i2], mut_std, map_size, bat_list), pt_ID, step_size=step_size, repertory=repertory, multithreading=multithreading)
+            pt_ID += 1
     return(d, pt_ID, n_children)
 
 
@@ -195,7 +216,7 @@ def kill_some_pts(pts, dr, df, di):
 
 ### 4 - INITIALIZATION
 
-def init_gen_algo(n, map_size, bat_list, corner_pts=False, step_size = 0.4, repertory = "Genetic"):
+def init_gen_algo(n, map_size, bat_list, corner_pts=False, step_size = 0.4, repertory = "Genetic", multithreading = False):
     """ Gets n random points to initialize the genetic algo. """
     data = [] ; pt_ID = 0
 
@@ -203,14 +224,40 @@ def init_gen_algo(n, map_size, bat_list, corner_pts=False, step_size = 0.4, repe
         raise Exception("ERROR : n={0} not sufficient when considering 8 points on boundaries".format(n))
 
     if corner_pts:
-        for (ax,ay) in [(0.0,0.0),(0.0,100.0),(100.0,0.0),(100.0,100.0)]: # corner points
-            data.append( (ax, ay, eval_solution(ax,ay,pt_ID, step_size=step_size, repertory=repertory)) ) ; pt_ID += 1
+        if multithreading:
+            in_simu = {}
+            executor = ThreadPoolExecutor(max_workers=4)
+            for (ax,ay) in [(0.0,0.0),(0.0,100.0),(100.0,0.0),(100.0,100.0)]: # corner points
+                in_simu[pt_ID] = executor.submit(eval_solution, ax,ay,pt_ID, step_size, repertory)
+                pt_ID += 1
+            pt_ID = 0
+            for (ax,ay) in [(0.0,0.0),(0.0,100.0),(100.0,0.0),(100.0,100.0)]:
+                data.append((ax, ay, in_simu[pt_ID].result())) ; pt_ID += 1
+        
+        else : 
+            for (ax,ay) in [(0.0,0.0),(0.0,100.0),(100.0,0.0),(100.0,100.0)]: # corner points
+                data.append((ax, ay, eval_solution(ax,ay,pt_ID, step_size, repertory))) ; pt_ID += 1
+                pt_ID += 1
     else: # corner_pts = False
         n += 4
 
-    for k in range(n-4):
-        (ax,ay) = get_random_pt(map_size,bat_list)
-        data.append( (ax, ay, eval_solution(ax,ay,pt_ID, step_size=step_size, repertory=repertory)) ) ; pt_ID += 1
+
+    if multithreading:
+        pt_init = pt_ID
+        for k in range(n-4):
+            in_simu = {}
+            executor = ThreadPoolExecutor()
+            (ax,ay) = get_random_pt(map_size,bat_list)
+            in_simu[pt_ID] = executor.submit(eval_solution, ax,ay,pt_ID, step_size, repertory)
+            pt_ID += 1
+        pt_ID = pt_init
+        for k in range(n-4):
+            data.append( (ax, ay, in_simu[pt_ID].result()) ) ; pt_ID += 1
+
+    else :
+        for k in range(n-4):
+            (ax,ay) = get_random_pt(map_size,bat_list)
+            data.append( (ax, ay, eval_solution(ax,ay,pt_ID, step_size=step_size, repertory=repertory)) ) ; pt_ID += 1
 
     data = sorted(data, key = lambda u : u[2])
     return(data,pt_ID)
@@ -218,7 +265,7 @@ def init_gen_algo(n, map_size, bat_list, corner_pts=False, step_size = 0.4, repe
 
 ### 5 - GENETIC ALGORITHM
 
-def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_flip=0.05, death_immun=0.1, repro_rate=0.2, mut_std=1.0, show=False, savemode="auto", savefile=None, resumefile=None, repertory = "Genetic"):
+def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_flip=0.05, death_immun=0.1, repro_rate=0.2, mut_std=1.0, show=False, savemode="auto", savefile=None, resumefile=None, repertory = "Genetic", multithreading = False):
     """ Runs an optimization process on a map with buildings using a genetic method. 
         - corner_pts : <bool> (add one initial pt at each corner of the map = 4 pts)
         - show : <bool> (show the execution of the algo with prints in the shell)
@@ -230,7 +277,7 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
 
     if resumefile == None:
         step_size = choose_step(n_pts)
-        data, pt_ID = init_gen_algo(n_pts, map_size, bat_list, corner_pts, step_size=step_size, repertory=repertory) # ; print("DATA",data)
+        data, pt_ID = init_gen_algo(n_pts, map_size, bat_list, corner_pts, step_size=step_size, repertory=repertory, multithreading = multithreading) # ; print("DATA",data)
         data_history = [list(data)]
     else:
         data_history = read_in_txt(resumefile) # fetch gen data from resumefile
@@ -253,7 +300,7 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
         step_size = choose_step(n_population)
 
         # REPRODUCTION
-        data, pt_ID, delta_SIM = create_children(data, repro_rate, mut_std, pt_ID, map_size, bat_list, step_size=step_size, repertory=repertory) # data is still sorted regarding the 3rd component of each elt
+        data, pt_ID, delta_SIM = create_children(data, repro_rate, mut_std, pt_ID, map_size, bat_list, step_size=step_size, repertory=repertory, multithreading = multithreading) # data is still sorted regarding the 3rd component of each elt
         NB_SIM += delta_SIM
         if show:
             print( "> REPRODUCTION : {0} individuals - BEST = {1}".format(len(data),data[0]) )
