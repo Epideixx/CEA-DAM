@@ -20,12 +20,12 @@ def get_centroid(d,p=None):
 # Parameters set for genetic algorithm benchmark
 
 PSET = {"map_size":100, "bat_list":BAT_list, "corner_pts":True, "n_pts":40, "n_gen":20,
-        "death_rate":0.25, "death_flip":0.05, "death_immun":0.1, "repro_rate":0.25, "mut_std":3.0}
+        "death_rate":0.25, "death_flip":0.05, "death_immun":0.2, "repro_rate":0.25, "mut_std":3.0}
 
 
 # Benchmark
 
-def benchmark(n_exec = 20, pset = PSET, src = None):
+def benchmark(n_exec=20, pset=PSET, src=None, show_cent=True, show_best=True):
     """ Benchmark de test de l'algo genetique. """
     benchmark_folder = "BENCHMARK_" + str(n_exec) + "/"
     os.mkdir("gen_data/" + benchmark_folder)
@@ -47,16 +47,25 @@ def benchmark(n_exec = 20, pset = PSET, src = None):
         best_pts[0,simu_gen] = final_pts[0][0]
         best_pts[1,simu_gen] = final_pts[0][1]
 
-        print("SIMU {0}/{1} : centroid = ({2},{3}) & best = ({4},{5})\n".format(simu_gen,n_exec,centroid[0],centroid[1],final_pts[0][0],final_pts[0][1]))
+        if simu_gen%50==0:
+            print("SIMU {0}/{1} : centroid = ({2},{3}) & best = ({4},{5})\n".format(simu_gen,n_exec,centroid[0],centroid[1],final_pts[0][0],final_pts[0][1]))
     
+    # Count points in clusters
+    left_pts = np.sum( (best_pts[0,:]<50).astype(int) )
+    print("Total nb of pts : {0}".format(best_pts.shape[1]))
+    print("Nb of pts in global mini : {0}".format(left_pts))
+    print("Nb of pts in local mini : {0}".format(best_pts.shape[1]-left_pts))
+
     # Plot centroids and best pts
     plt.figure(figsize=(10, 7))
-    show_bat(BAT_list)
+    show_bat(BAT_list, marker='r-')
     if src != None:
-        plt.scatter(src[0], src[1], s=50.0, marker="s", color="black", label="SRC ({0},{1})".format(src[0],src[1]))
+        plt.scatter(src[0], src[1], s=50.0, marker="s", color="black", label="ST ({0},{1})".format(src[0],src[1]))
     show_boundaries()
-    plt.scatter(centroid_pts[0,:], centroid_pts[1,:], color='b', label="CENTROIDS")
-    plt.scatter(best_pts[0,:], best_pts[1,:], color='green', marker='^', label="BEST PTS")
+    if show_cent:
+        plt.scatter(centroid_pts[0,:], centroid_pts[1,:], color='b', label="CENTROIDS")
+    if show_best:
+        plt.scatter(best_pts[0,:], best_pts[1,:], color='green', marker='^', label="BEST PTS")
     plt.axis('equal') ; plt.legend(loc='upper left', fontsize=8)
     plt.show()
 
@@ -65,4 +74,4 @@ def benchmark(n_exec = 20, pset = PSET, src = None):
 
 # Launch benchmark
 
-centroid_pts, best_pts = benchmark(n_exec=50, src=(22,20))
+centroid_pts, best_pts = benchmark(n_exec=500, src=None, show_cent=False, show_best=True)

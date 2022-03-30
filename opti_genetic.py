@@ -231,7 +231,7 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
 
 ### 7 - LAUNCH !
 
-if 0 and __name__ == "__main__":
+if 1 and __name__ == "__main__":
 
     final_points = genetic_algo(map_size = 100,
                                 bat_list = BAT_list,
@@ -240,7 +240,7 @@ if 0 and __name__ == "__main__":
                                 n_gen = 20, # 20
                                 death_rate = 0.25, # 25
                                 death_flip = 0.05, # 5
-                                death_immun = 0.1, # 5
+                                death_immun = 0.2, # 10
                                 repro_rate = 0.25, # 25
                                 mut_std = 3.0,
                                 show = True,
