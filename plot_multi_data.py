@@ -44,13 +44,9 @@ for index in range(nb_stations):
 for i in range(nb_stations):
     # axs[i].plot(data_t[i],data_sign[i])
     plt.plot(data_t[i], data_sign[i], color=COLORS[i])
-<<<<<<< HEAD
 plt.xlabel("Time (s)")
 plt.ylabel("Pression (Pa)")
 plt.title()
-=======
-    plt.scatter(spikes[i], 100000, color=COLORS[i])
->>>>>>> Global
 plt.show()
 
 
