@@ -1,10 +1,11 @@
+from asyncore import write
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import argparse
 from scipy import signal as sgn
 
-from fonctionCoutPierre.differentialTimeWarping import displayMatch
+from differentialTimeWarping import displayMatch
 
 deltaT = 9.03696114115064 * 1e-5
 nb_stations = 6
@@ -48,9 +49,9 @@ def getData(folder):
     return signalArray
 
 
-signalArray60 = getData("TE6StatLoS")
-signalArray40 = getData('TEexplo40')
-signalArray55 = getData('TEexplo55')
+signalArray60 = getData("fonctionCoutPierre/TE6StatLoS")
+signalArray40 = getData('fonctionCoutPierre/TEexplo40')
+signalArray55 = getData('fonctionCoutPierre/TEexplo55')
 
 
 def correlationSignals(signalArray1, signalArray2):
@@ -123,6 +124,95 @@ def compareCorr(interCorrArray, autoCorrArray, lags):
 
 # interArray, autoArray, lags = correlationSignals(signalArray40, signalArray60)
 # compareCorr(interArray, autoArray, lags)
+
+def are_close(x,y,precision = 0.000000001):
+    return abs(x-y) < precision
+
+
+def refine_time(sig1,sig2):
+    time_list_1 = sig1[0,:,0]
+    time_list_2 = sig2[0,:,0]
+
+    nb_stations = 1
+
+    full_time_list = np.union1d(time_list_1,time_list_2)
+
+
+    new_sig1 = np.zeros((nb_stations,np.shape(full_time_list)[0],2))
+    new_sig2 = np.zeros((nb_stations,np.shape(full_time_list)[0],2))
+
+    print(np.shape(time_list_1))
+    print(np.shape(new_sig1))
+    print(np.shape(sig1))
+
+    ind1 = 0
+    ind2 = 0
+    ind_t = 0
+    block_1 = False
+    block_2 = False
+
+    print(sig1)
+
+    print(sig2)
+
+    t1 = time_list_1[0]
+    t2 = time_list_2[0]
+
+
+
+    for ind_t in range(len(full_time_list)):
+        t = full_time_list[ind_t]
+        print(t,t1,t2,ind1,ind2,are_close(t1,t),are_close(t2,t))
+
+        if are_close(t1,t):
+            for i in range(nb_stations):
+                new_sig1[i,ind_t] = np.array((t,sig1[i,ind1,1]))
+        else:
+            for i in range(nb_stations):
+                if ind1 < np.shape(time_list_1)[0] - 1:
+                    nv =  np.array((t,(sig1[i,ind1-1,1] + (sig1[i,ind1,1] - sig1[i,ind1-1,1])*(t-t1)/(time_list_1[ind1+1]-t1))))
+                    #print("nv1", nv)
+                    new_sig1[i,ind_t] = nv
+                else:
+                    new_sig1[i,ind_t] = np.array((t,sig1[i,ind1,1]))
+             
+
+        if are_close(t2,t):
+            for i in range(nb_stations):
+                new_sig2[i,ind_t] = np.array((t,sig2[i,ind2,1]))
+        else:
+            for i in range(nb_stations):
+                if ind2 < np.shape(time_list_2)[0] - 1:
+                    nv = np.array((t,(sig2[i,ind2-1,1] + (sig2[i,ind2,1] - sig2[i,ind2-1,1])*(t-t2)/(time_list_2[ind2+1]-t2))))
+                    #print("nv2",nv)
+                    new_sig2[i,ind_t] = nv
+                else:
+                    new_sig2[i,ind_t] = np.array((t,sig2[i,ind2,1]))
+        if ind_t < len(full_time_list)-1:            
+            if ind1 < len(time_list_1):
+                if are_close(time_list_1[ind1+1],full_time_list[ind_t+1]):
+                    ind1 += 1
+                    t1 = time_list_1[ind1]
+            if ind2 < len(time_list_2):
+                if are_close(time_list_2[ind2+1],full_time_list[ind_t+1]):
+                    ind2 += 1
+                    t2 = time_list_2[ind2]
+
+    return (new_sig1,new_sig2)
+
+
+l1 = np.zeros((1,5,2))
+l1[0,:,:] = np.array([(1,10),(1.5,12),(2,10),(3,12),(3.5,10)])
+l2 = np.zeros((1,5,2))
+l2[0,:,:] = np.array([(1,12),(1.5,10),(2.5,12),(2.75,10),(3.5,12)])
+
+time_list_1 = l1[0,:,0]
+
+time_list_2 = l2[0,:,0]
+full_time_list = np.union1d(time_list_1,time_list_2)
+print(full_time_list)
+
+print(refine_time(l1,l2))
 
 
 def getDelay(signal1Stat1, signal2Stat1):
@@ -267,19 +357,28 @@ def cout(sigArray1, sigArray2):
 
     #dist = compareCorr(interArray, autoArray, lags)
 
-    path = displayMatch(sigArray1,sigArray2)
+    path = []
+
+    for i in range(nb_stations):
+        path.append(displayMatch(sigArray1[i],sigArray2[i]))
+
 
     dist = 0
 
-    for couple in path:
-        (i,j) = couple
+    for s in range(nb_stations):
 
-        dist += (deltat*(i-j))**2 + (sigArray1[i] - sigArray2[j])**2 
+        for couple in path[s]:
+            (i,j) = couple
+
+            dist += (sigArray1[s,i,0] - sigArray2[s,j,0])**2 + (sigArray1[s,i,1] - sigArray2[s,j,1])**2 
+
+    dist /= (s*len(path[0]))
 
 
     return dist
 
 
 #dist = cout(signalArray60, signalArray40)
-#dist = cout(signalArray60, signalArray55)
+dist = cout(signalArray60, signalArray55)
+print(dist)
 #dist = cout(signalArray60, sigArray60Delayed)

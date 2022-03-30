@@ -101,6 +101,8 @@ def getPath(DTW):
     n, m = np.shape(DTW)
     plotMatrix = np.full((n, m), False)
 
+    print(n,m)
+
     i = n-1
     j = m-1
 
@@ -123,8 +125,8 @@ def getPath(DTW):
             plotMatrix[i, j] = True
         path.append(np.array([i, j]))
 
-    plt.imshow(plotMatrix)
-    plt.show()
+    #plt.imshow(plotMatrix)
+    #plt.show()
     path = np.array(path)
 
     return path[::-1, :]
