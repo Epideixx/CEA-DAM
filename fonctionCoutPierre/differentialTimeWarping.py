@@ -94,7 +94,7 @@ def DDTW(sig1, sig2):
             else:
                 DDTW[i, j] = dist + \
                     min(DDTW[i-1, j-1], DDTW[i-1, j], DDTW[i, j-1])
-    return DDTW
+    return DDTW, derivative1, derivative2
 
 
 def getPath(DTW):
@@ -147,7 +147,7 @@ def displayMatch(sig1, sig2, derivative=False):
     normalizeSignal(sig1)
     normalizeSignal(sig2)
     if derivative:
-        a = DDTW(sig1, sig2)
+        a, d1, d2 = DDTW(sig1, sig2)
         print('derivative method', a[-1, -1])
     else:
         a = DTW(sig1, sig2)
@@ -172,3 +172,31 @@ def displayMatch(sig1, sig2, derivative=False):
 
 #displayMatch(sig1, sig2)
 #displayMatch(sig1, sig2, derivative=True)
+
+nb_stations = 6
+
+
+def costDDTW(sigArray1, sigArray2, nb_stations):
+
+    distances = np.empty(nb_stations)
+
+    for k in range(nb_stations):
+
+        sig1 = sigArray1[k]
+        sig2 = sigArray2[k]
+        warping, derivative1, derivative2 = DDTW(sig1, sig2)
+        path = getPath(warping)
+
+        distance = 0
+
+        K = len(path)
+        for l in range(K):
+            index = path[l]
+            i, j = index[0], index[1]
+            distance += (derivative1[i] - derivative2[j])**2
+
+        distances[k] = distance
+
+    cost = np.mean(distances)
+
+    return cost

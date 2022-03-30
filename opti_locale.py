@@ -54,4 +54,4 @@ def greedy_search(X0, Y0, grid_step):
 
 
 if __name__ == "__main__":
-    greedy_search(X0, Y0, grid_step=???)
+    greedy_search(X0, Y0, grid_step=1)

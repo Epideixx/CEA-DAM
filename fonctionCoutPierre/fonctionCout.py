@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import csv
 import argparse
 from scipy import signal as sgn
+from differentialTimeWarping import displayMatch, costDDTW
 
 from differentialTimeWarping import displayMatch
 
@@ -36,8 +37,8 @@ def getData(folder):
     for i in range(nb_stations):
         # axs[i].plot(data_t[i], data_sign[i])
         plt.plot(data_t[i], data_sign[i], label='station' + str(i))
-        plt.legend()
-    plt.show()
+        #plt.legend()
+    # #plt.show()
 
     signalArray = np.empty((nb_stations, len(data_t[0]), 2))
 
@@ -49,16 +50,11 @@ def getData(folder):
     return signalArray
 
 
-signalArray60 = getData("fonctionCoutPierre/TE6StatLoS")
-signalArray40 = getData('fonctionCoutPierre/TEexplo40')
-signalArray55 = getData('fonctionCoutPierre/TEexplo55')
-
-
 def correlationSignals(signalArray1, signalArray2):
     # Calcul les intercorrelations des signaux reçus stations par stations
     # Renvoi aussi les autocorrelation du signal1 considéré comme le signal d'origine
 
-    fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
+    #fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
 
     sig1k = signalArray1[0]
     sig2k = signalArray2[0]
@@ -84,20 +80,20 @@ def correlationSignals(signalArray1, signalArray2):
         interCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig2k[:, 1]))
         autoCorr = sgn.correlate(np.abs(sig1k[:, 1]), np.abs(sig1k[:, 1]))
 
-        axs[k, 0].plot(
-            lags, interCorr, label='correlation entre les signaux de la station' + str(k))
-        axs[k, 0].legend()
+        #axs[k, 0].plot(
+        #    lags, interCorr, label='correlation entre les signaux de la station' + str(k))
+        #axs[k, 0].legend()
 
-        axs[k, 1].plot(sig1k[:, 0], sig1k[:, 1],
-                       label='signal 60 station' + str(k))
-        axs[k, 1].plot(sig2k[:, 0], sig2k[:, 1],
-                       label='signal 50 station' + str(k))
-        axs[k, 1].legend()
+        #axs[k, 1].plot(sig1k[:, 0], sig1k[:, 1],
+        #               label='signal 60 station' + str(k))
+        #axs[k, 1].plot(sig2k[:, 0], sig2k[:, 1],
+        #               label='signal 50 station' + str(k))
+        #axs[k, 1].legend()
 
         interCorrArray[k, :] = interCorr
         autoCorrArray[k, :] = autoCorr
 
-    plt.show()
+    #plt.show()
     return interCorrArray, autoCorrArray, lags
 
 
@@ -109,15 +105,15 @@ def compareCorr(interCorrArray, autoCorrArray, lags):
     corrDifference = interCorrArray - autoCorrArray
     distanceCorr = np.sum(np.linalg.norm(corrDifference, axis=1))
 
-    fig, axs = plt.subplots(nrows=nb_stations, sharex=True)
+    #fig, axs = ##plt.subplots(nrows=nb_stations, sharex=True)
 
-    for k in range(nb_stations):
+    #for k in range(nb_stations):
 
-        axs[k].plot(lags, corrDifference[k],
-                    label='différence de corrélations pour la station' + str(k))
-        axs[k].legend()
+    #    axs[k].plot(lags, corrDifference[k],
+    #                label='différence de corrélations pour la station' + str(k))
+    #    axs[k].legend()
 
-    plt.show()
+    #plt.show()
     print(np.sum(distanceCorr))
     return np.sum(distanceCorr)
 
@@ -141,9 +137,6 @@ def refine_time(sig1,sig2):
     new_sig1 = np.zeros((nb_stations,np.shape(full_time_list)[0],2))
     new_sig2 = np.zeros((nb_stations,np.shape(full_time_list)[0],2))
 
-    print(np.shape(time_list_1))
-    print(np.shape(new_sig1))
-    print(np.shape(sig1))
 
     ind1 = 0
     ind2 = 0
@@ -151,9 +144,6 @@ def refine_time(sig1,sig2):
     block_1 = False
     block_2 = False
 
-    print(sig1)
-
-    print(sig2)
 
     t1 = time_list_1[0]
     t2 = time_list_2[0]
@@ -201,18 +191,18 @@ def refine_time(sig1,sig2):
     return (new_sig1,new_sig2)
 
 
-l1 = np.zeros((1,5,2))
-l1[0,:,:] = np.array([(1,10),(1.5,12),(2,10),(3,12),(3.5,10)])
-l2 = np.zeros((1,5,2))
-l2[0,:,:] = np.array([(1,12),(1.5,10),(2.5,12),(2.75,10),(3.5,12)])
+#l1 = np.zeros((1,5,2))
+#l1[0,:,:] = np.array([(1,10),(1.5,12),(2,10),(3,12),(3.5,10)])
+#l2 = np.zeros((1,5,2))
+#l2[0,:,:] = np.array([(1,12),(1.5,10),(2.5,12),(2.75,10),(3.5,12)])
 
-time_list_1 = l1[0,:,0]
+#time_list_1 = l1[0,:,0]
 
-time_list_2 = l2[0,:,0]
-full_time_list = np.union1d(time_list_1,time_list_2)
-print(full_time_list)
+#time_list_2 = l2[0,:,0]
+#full_time_list = np.union1d(time_list_1,time_list_2)
+#print(full_time_list)
 
-print(refine_time(l1,l2))
+#print(refine_time(l1,l2))
 
 
 def getDelay(signal1Stat1, signal2Stat1):
@@ -275,7 +265,7 @@ def removeDelay(sigArray1, sigArray2):
             sigArrayNoDelay1[k, :, 0] = time
             sigArrayNoDelay2[k, :, 0] = time'''
 
-    fig, axs = plt.subplots(nrows=nb_stations, ncols=2)
+    #fig, axs = #plt.subplots(nrows=nb_stations, ncols=2)
     # On affiche les signaux récalés par rapport aux signaux décalés
     for k in range(nb_stations):
         sig1NoDelayk = sigArrayNoDelay1[k, :, 1]
@@ -284,15 +274,15 @@ def removeDelay(sigArray1, sigArray2):
         sig1k = sigArray1[k, :N, 1]
         sig2k = sigArray2[k, :N, 1]
 
-        axs[k, 0].plot(time, sig1NoDelayk, label='No Delay')
-        axs[k, 0].plot(time, sig2NoDelayk)
-        axs[k, 0].legend()
+    #    axs[k, 0].plot(time, sig1NoDelayk, label='No Delay')
+    #    axs[k, 0].plot(time, sig2NoDelayk)
+    #    axs[k, 0].legend()
 
-        axs[k, 1].plot(time, sig1k, label='delay')
-        axs[k, 1].plot(time, sig2k)
-        axs[k, 1].legend()
+    #    axs[k, 1].plot(time, sig1k, label='delay')
+    #    axs[k, 1].plot(time, sig2k)
+    #    axs[k, 1].legend()
 
-    plt.show()
+    #plt.show()
     return sigArrayNoDelay1, sigArrayNoDelay2
 
 
@@ -323,20 +313,19 @@ def createDelay(sigArray, delay):
             sigArrayDelayed[k, :, 0] = sigArray[k, :, 0]
             # si c'est une avance on fait un autre décalage
 
-    fig, axs = plt.subplots(nrows=nb_stations)
+    #fig, axs = plt.subplots(nrows=nb_stations)
     # On affiche les signaux originaux et retardés/Avancés
 
-    for k in range(nb_stations):
-        axs[k].plot(sigArrayDelayed[k, :, 0],
-                    sigArrayDelayed[k, :, 1], label='delayed')
-        axs[k].plot(sigArray[k, :, 0], sigArray[k, :, 1], label='original')
-        axs[k].legend()
+    #for k in range(nb_stations):
+    #    axs[k].plot(sigArrayDelayed[k, :, 0],
+    #                sigArrayDelayed[k, :, 1], label='delayed')
+    #    axs[k].plot(sigArray[k, :, 0], sigArray[k, :, 1], label='original')
+    #    axs[k].legend()
 
-    plt.show()
+    #plt.show()
     return sigArrayDelayed
 
 
-#sigArray60Delayed = createDelay(signalArray60, -30)
 # a, b = removeDelay(signalArray60, sigArray60Delayed)
 
 
@@ -352,7 +341,7 @@ def cout(sigArray1, sigArray2):
     sigArray1NoDelay, sigArray2NoDelay = removeDelay(
         sigArray1, sigArray2)
 
-    #interArray, autoArray, lags = correlationSignals(
+    # interArray, autoArray, lags = correlationSignals(
     #    sigArray1NoDelay, sigArray2NoDelay)
 
     #dist = compareCorr(interArray, autoArray, lags)
@@ -374,11 +363,17 @@ def cout(sigArray1, sigArray2):
 
     dist /= (s*len(path[0]))
 
-
     return dist
 
 
 #dist = cout(signalArray60, signalArray40)
-dist = cout(signalArray60, signalArray55)
-print(dist)
+#dist = cout(signalArray60, signalArray55)
+#print(dist)
 #dist = cout(signalArray60, sigArray60Delayed)
+
+#signalArray60 = getData("TE6StatLoS")
+#signalArray40 = getData('TEexplo40')
+#signalArray55 = getData('TEexplo55')
+#sigArray60Delayed = createDelay(signalArray60, 30)
+#displayMatch(signalArray60[0], signalArray55[0])
+#displayMatch(signalArray60[0], signalArray55[0], derivative=True)
