@@ -46,9 +46,9 @@ def getData(folder):
     return signalArray
 
 
-signalArray60 = getData("TE6StatLoS")
+'''signalArray60 = getData("TE6StatLoS")
 signalArray40 = getData('TEexplo40')
-signalArray55 = getData('TEexplo55')
+signalArray55 = getData('TEexplo55')'''
 
 
 def correlation_lags(N):
@@ -153,7 +153,7 @@ def getDelay(signal1Stat1, signal2Stat1):
     return np.abs(delay), delayed
 
 
-def removeDelay(sigArray1, sigArray2):
+def removeDelay(sigArray1, sigArray2, nb_stations):
     # Recadre les signaux de toutes les stations par rapport au retard des signaux de la station 0
 
     sigToCompare1 = sigArray1[0]
@@ -253,7 +253,7 @@ def createDelay(sigArray, delay):
     return sigArrayDelayed
 
 
-sigArray60Delayed = createDelay(signalArray60, -30)
+#sigArray60Delayed = createDelay(signalArray60, -30)
 
 # a, b = removeDelay(signalArray60, sigArray60Delayed)
 
@@ -338,5 +338,5 @@ def coutMaxCorrelation(sigArray1, sigArray2):
 # coutMaxCorrelation(signalArray60, sigArray60Delayed)
 
 
-displayMatch(sigArray60Delayed[0], signalArray60[0])
-displayMatch(sigArray60Delayed[0], signalArray60[0], derivative=True)
+#displayMatch(sigArray60Delayed[0], signalArray60[0])
+#displayMatch(sigArray60Delayed[0], signalArray60[0], derivative=True)
