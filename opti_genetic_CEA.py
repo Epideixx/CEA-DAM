@@ -6,6 +6,7 @@ from buildings_data import BAT_list, SENSORS_list
 from is_inside import is_inside_bat
 from plot_gen_data import *
 from read_write_gen_data import *
+import fonctionCout_Genetic
 
 import random
 import numpy as np
@@ -47,7 +48,7 @@ def eval_solution_test(x, y, id=None):
         fx += PARAM[i,4] - (PARAM[i,3] * np.exp( -PARAM[i,2] * ( (x-PARAM[i,0])*(x-PARAM[i,0]) + (y-PARAM[i,1])*(y-PARAM[i,1]) )))
     return(fx)
 
-def eval_solution(x, y, id = None, step_size = 0.4, repertory = "Genetic"):
+def eval_solution(x, y, real_data_folder, id = None, step_size = 0.4, repertory = "Genetic"):
     """ Evaluate quality of a source point (x,y). id is used to get a unique ID for the files
         from the CEA simulation with a given step size"""
     
@@ -66,13 +67,11 @@ def eval_solution(x, y, id = None, step_size = 0.4, repertory = "Genetic"):
     shutil.copytree(src, dest)
     shutil.rmtree(filename)
 
-    # We evaluate the point with the data
-    # TO UNCOMMENT
-    """
-    eval = cost_function(dest)
+    # We evaluate the point with the data    
+    eval = fonctionCout_Genetic.main(dest, real_data_folder)
 
     return eval
-    """
+
 
 
 def get_random_pt(map_size,bat_list):
