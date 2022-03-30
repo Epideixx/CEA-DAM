@@ -1,6 +1,6 @@
 import numpy as np
 from math import pi
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 n = 100
 m = 100
@@ -17,8 +17,10 @@ vcarre = np.vectorize(carre)
 
 
 #sig1 = np.sin(np.linspace(lBound, uBound, n))
-time1 = np.linspace(lBound, uBound, n)
-time2 = np.linspace(lBound, uBound, m)
+time1 = np.linspace(lBound, uBound, n) + \
+    np.random.normal(loc=0, scale=0.05, size=n)
+time2 = np.linspace(lBound, uBound, m) + \
+    np.random.normal(loc=0, scale=0.05, size=n)
 values1 = np.sin(time1)
 values2 = np.sin(time2)+1
 
@@ -92,12 +94,14 @@ def DDTW(sig1, sig2):
             else:
                 DDTW[i, j] = dist + \
                     min(DDTW[i-1, j-1], DDTW[i-1, j], DDTW[i, j-1])
-    return DDTW
+    return DDTW, derivative1, derivative2
 
 
 def getPath(DTW):
     n, m = np.shape(DTW)
     plotMatrix = np.full((n, m), False)
+
+    print(n,m)
 
     i = n-1
     j = m-1
@@ -121,32 +125,78 @@ def getPath(DTW):
             plotMatrix[i, j] = True
         path.append(np.array([i, j]))
 
-    plt.imshow(plotMatrix)
-    plt.show()
+    #plt.imshow(plotMatrix)
+    #plt.show()
     path = np.array(path)
 
     return path[::-1, :]
 
 
+def normalizeSignal(sig):
+    '''mean = np.mean(sig[:, 1])
+    sig[:, 1] -= mean
+    std = np.linalg.norm(sig[:, 1])
+    sig[:, 1] /= std'''
+
+    interval = sig[-1, 0] - sig[0, 0]
+    sig[:, 0] -= sig[0, 0]
+    sig[:, 0] /= interval
+
+
 def displayMatch(sig1, sig2, derivative=False):
+    normalizeSignal(sig1)
+    normalizeSignal(sig2)
     if derivative:
-        a = DDTW(sig1, sig2)
+        a, d1, d2 = DDTW(sig1, sig2)
         print('derivative method', a[-1, -1])
     else:
         a = DTW(sig1, sig2)
         print('regular method', a[-1, -1])
     path = getPath(a)
     K = len(path)
+    m = len(sig2)
+    #print('warping', (K-m)/m)
 
-    for k in range(K):
-        i = path[k, 0]
-        j = path[k, 1]
-        plt.plot([sig1[i, 0], sig2[j, 0]], (sig1[i, 1], sig2[j, 1]),
-                 color='blue')
+    #for k in range(K):
+    #    i = path[k, 0]
+    #    j = path[k, 1]
+        #plt.plot([sig1[i, 0], sig2[j, 0]], (sig1[i, 1], sig2[j, 1]),
+    #             color='blue')
+    
+    #plt.plot(sig1[:, 0], sig1[:, 1], color='red')
+    #plt.plot(sig2[:, 0], sig2[:, 1], color='red')
+    #plt.show()
 
-    plt.plot(sig1[:, 0], sig1[:, 1], color='red')
-    plt.plot(sig2[:, 0], sig2[:, 1], color='red')
-    plt.show()
+    return path
 
 
 #displayMatch(sig1, sig2)
+#displayMatch(sig1, sig2, derivative=True)
+
+nb_stations = 6
+
+
+def costDDTW(sigArray1, sigArray2, nb_stations):
+
+    distances = np.empty(nb_stations)
+
+    for k in range(nb_stations):
+
+        sig1 = sigArray1[k]
+        sig2 = sigArray2[k]
+        warping, derivative1, derivative2 = DDTW(sig1, sig2)
+        path = getPath(warping)
+
+        distance = 0
+
+        K = len(path)
+        for l in range(K):
+            index = path[l]
+            i, j = index[0], index[1]
+            distance += (derivative1[i] - derivative2[j])**2
+
+        distances[k] = distance
+
+    cost = np.mean(distances)
+
+    return cost
