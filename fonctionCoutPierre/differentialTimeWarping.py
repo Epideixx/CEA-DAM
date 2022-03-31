@@ -1,12 +1,57 @@
 import numpy as np
 from math import pi
 import matplotlib.pyplot as plt
-
+import csv
 n = 100
 m = 100
 lBound = 0
 uBound = 4*pi
 intervalLength = uBound - lBound
+
+nb_stations = 6
+
+
+def getData(folder):
+
+    # fig, axs = plt.subplots(nb_stations, sharey=True)
+    data_t = [[] for i in range(nb_stations)]
+    data_sign = [[] for i in range(nb_stations)]
+
+    for index in range(nb_stations):
+        file_name = "./" + folder + "/STATION_ST" + str(index)
+
+        data = open(file_name, 'r')
+
+        data_reader = csv.reader(data, delimiter=' ')
+
+        first = True
+        for row in data_reader:
+            if not first:
+                data_t[index].append(float(row[0]))
+                data_sign[index].append(float(row[1]))
+            else:
+                first = False
+        data.close()
+
+    # for i in range(nb_stations):
+        # axs[i].plot(data_t[i], data_sign[i])
+        # plt.plot(data_t[i], data_sign[i], label='station' + str(i))
+        # plt.legend()
+    # plt.show()
+
+    signalArray = np.empty((nb_stations, len(data_t[0]), 2))
+
+    for k in range(nb_stations):
+        signalArray[k, :, 0] = data_t[k]
+        signalArray[k, :, 1] = data_sign[k]
+
+    signalArray[:, :, 1] -= 1e5
+    return signalArray
+
+
+signalArray60 = getData("TE6StatLoS")
+signalArray40 = getData('TEexplo40')
+signalArray55 = getData('TEexplo55')
 
 
 def carre(x):
@@ -19,8 +64,8 @@ vcarre = np.vectorize(carre)
 #sig1 = np.sin(np.linspace(lBound, uBound, n))
 time1 = np.linspace(lBound, uBound, n)
 time2 = np.linspace(lBound, uBound, m)
-values1 = np.sin(time1)
-values2 = np.sin(time2)+1
+values1 = np.sin(time1)+np.random.normal(0, 0.05, n)
+values2 = np.sin(time2)+1+np.random.normal(0, 0.05, m)
 
 
 sig1 = np.zeros((n, 2))
@@ -121,7 +166,8 @@ def getPath(DTW):
             plotMatrix[i, j] = True
         path.append(np.array([i, j]))
 
-    plt.imshow(plotMatrix)
+    plt.imshow(plotMatrix,
+               cmap='binary')
     plt.show()
     path = np.array(path)
 
@@ -149,4 +195,5 @@ def displayMatch(sig1, sig2, derivative=False):
     plt.show()
 
 
-#displayMatch(sig1, sig2)
+displayMatch(signalArray60[0], signalArray55[0])
+displayMatch(signalArray60[0], signalArray55[0], derivative=True)

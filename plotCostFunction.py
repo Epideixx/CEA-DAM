@@ -3,15 +3,17 @@ import matplotlib.pyplot as plt
 import csv
 import argparse
 from costDTW import costDDTW
+from costMaxCorrelation import costCorrelation
+from costSVD import interpSignals, costSVD
 from buildings_data import BAT_list, SENSORS_list
 from is_inside import is_inside_bat
 from mpl_toolkits import mplot3d
 from scipy import interpolate
-from fonctionCoutPierre.fonctionCout import removeDelay
+
 
 nb_stations = 5
 lbound = 20
-ubound = 100
+ubound = 90
 step = 10
 nPoint = (ubound - lbound)//step
 
@@ -51,17 +53,20 @@ def getData(folder):
 
 
 sigExplosion = getData("Cost_function_simulations/CAS_Simulation_sensor_50_60")
-sigExplosion1 = getData(
-    "Cost_function_simulations/CAS_Simulation_sensor_90_40")
 # sigExplosion2 = getData(
 # "Cost_function_simulations/CAS_Simulation_sensor_0_0")
 
 
-def plotCostFunction(sigExplosion, nb_stations):
+def plotCostFunction(sigExplosion, nb_stations, function='DDTW', NSVD=3000):
 
     x = np.arange(lbound, ubound, 10)
     X, Y = np.meshgrid(x, x)
     Z = np.zeros((nPoint, nPoint))
+
+    if function == 'SVD':
+        T = np.linspace(0, 1, NSVD)
+        sigExplosionInterp = interpSignals(sigExplosion, NSVD)
+        sigSimu = np.full((nb_stations, nPoint**2, NSVD), fill_value=0)
 
     for i in range(lbound, ubound, step):
         for j in range(lbound, ubound, step):
@@ -70,13 +75,24 @@ def plotCostFunction(sigExplosion, nb_stations):
             else:
                 sigLocal = getData(
                     "Cost_function_simulations/CAS_Simulation_sensor_" + str(i) + "_" + str(j))
-                sigExplosionNoDelay, sigLocalNoDelay = removeDelay(
-                    sigExplosion, sigLocal, nb_stations=nb_stations)
-                cost = costDDTW(sigExplosionNoDelay,
-                                sigLocalNoDelay, nb_stations)
-                Z[(i-lbound)//step, (j-lbound)//step] = cost
-            print(i, j, cost)
+                if function == 'DDTW':
+                    cost = costDDTW(sigExplosion,
+                                    sigLocal, nb_stations)
+                    Z[(i-lbound)//step, (j-lbound)//step] = cost
+                    print(i, j, cost)
+                elif function == 'correlation':
+                    cost = costCorrelation(sigExplosion,
+                                           sigLocal, nb_stations)
+                    Z[(i-lbound)//step, (j-lbound)//step] = cost
+                    print(i, j, cost)
+                elif function == 'SVD':
+                    sigSimu[:, nPoint*(i-lbound)//step+(j-lbound)//step,
+                            :] = interpSignals(sigLocal, NSVD)
 
+    if function == 'SVD':
+        cost = costSVD(nb_stations, sigExplosionInterp, sigSimu, nSingular=5)
+        cost = np.reshape(cost, (nPoint, nPoint))
+        Z = cost
     M = np.max(Z)
     Z[Z == -np.inf] = M
 
@@ -126,7 +142,7 @@ def plotPoly(poly=True, polyStep=step, log=True):
             else:
                 f = interpolate.interp2d(X, Y, Z, kind='cubic')
 
-            xnew = np.arange(lbound, ubound, polyStep)
+            xnew = np.arange(lbound+10, ubound, polyStep)
             znew = f(xnew, xnew)
             Xnew, Ynew = np.meshgrid(xnew, xnew)
             ax.plot_surface(Xnew, Ynew, znew, cmap='jet')
@@ -145,8 +161,8 @@ def plotPoly(poly=True, polyStep=step, log=True):
         plt.show()
 
 
-#Z = plotCostFunction(sigExplosion, nb_stations)
+Z = plotCostFunction(sigExplosion, nb_stations, function='correlation')
 
 #print(costDDTW(sigExplosion, sigExplosion2, nb_stations))
 
-#plotPoly(polyStep=1, log=True)
+plotPoly(polyStep=1, log=False)

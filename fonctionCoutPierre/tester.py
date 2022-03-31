@@ -17,7 +17,7 @@ def carre(x):
 vcarre = np.vectorize(carre)
 
 
-#sig1 = np.sin(np.linspace(lBound, uBound, n))
+# sig1 = np.sin(np.linspace(lBound, uBound, n))
 time1 = np.linspace(lBound, uBound, n)
 time2 = np.linspace(lBound, uBound, m)
 values1 = np.sin(time1)
@@ -150,26 +150,14 @@ def displayMatch(sig1, sig2, derivative=False):
     plt.show()
 
 
-#displayMatch(sig1, sig2)
+# displayMatch(sig1, sig2)
 '''
 
+a = np.random.normal(0, 1, 10)
+t = np.linspace(0, 1, 10)
 
-def f(x, y):
-    return np.sin(np.sqrt(x ** 2 + y ** 2))
+print(a)
+b = np.interp(np.linspace(0, 1, 100), t, a)
 
-
-x = np.linspace(-6, 6, 30)
-y = np.linspace(-6, 6, 30)
-
-X, Y = np.meshgrid(x, y)
-Z = f(X, Y)
-
-print(np.shape(Z))
-
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.plot_surface(X, Y, Z, cmap='binary')
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
+plt.plot(np.linspace(0, 1, 100), b)
 plt.show()
