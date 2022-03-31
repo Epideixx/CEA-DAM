@@ -127,15 +127,17 @@ def create_children(d, rr, mut_std, pt_ID, map_size, bat_list):
 
 ### 3 - DEATH FEATURES
 
-def kill_some_pts(pts, dr, di):
+def kill_some_pts(pts, dr, df, di):
     """ Kills the worst dr% points, each one of them having a last di% chance to survive.
-        And each of the non-selected (1-dr)% points have di% chance to die too. """
+        And each of the non-selected (1-dr)% points have ds% chance to die too. 
+        However the di% best points always survive. """
     survival_list = [True for k in range(len(pts))]
     for k in range(1,int(len(pts)*dr)+1): # worst points that are deemed to die at the beginning
         survival_list[len(pts)-k] = False
-    new_pts = []
-    for k in range(0,len(pts)):
-        if random.random()<=di: # a chance to survive or a risk to die
+    nb_best = int(di*len(pts))
+    new_pts = [pts[i] for i in range(0,nb_best)] # the best di% always survive
+    for k in range(nb_best,len(pts)): # for all pts except the best di%
+        if random.random()<=df: # a chance to survive or a risk to die
             survival_list[k] = not(survival_list[k])
         if survival_list[k]: # the survivors
             new_pts.append(pts[k])
@@ -167,7 +169,7 @@ def init_gen_algo(n, map_size, bat_list, corner_pts=False):
 
 ### 5 - GENETIC ALGORITHM
 
-def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_immun=0.05, repro_rate=0.2, mut_std=1.0, show=False, savemode="auto", savefile=None, resumefile=None):
+def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_rate=0.1, death_flip=0.05, death_immun=0.1, repro_rate=0.2, mut_std=1.0, show=False, savemode="auto", savefile=None, resumefile=None):
     """ Runs an optimization process on a map with buildings using a genetic method. 
         - corner_pts : <bool> (add one initial pt at each corner of the map = 4 pts)
         - show : <bool> (show the execution of the algo with prints in the shell)
@@ -201,7 +203,7 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
             print( "> REPRODUCTION : {0} individuals - BEST = {1}".format(len(data),data[0]) )
 
         # DEATH
-        data = kill_some_pts(data, death_rate, death_immun) # data is still sorted regarding the 3rd component of each elt
+        data = kill_some_pts(data, death_rate, death_flip, death_immun) # data is still sorted regarding the 3rd component of each elt
         if len(data) == 0:
             raise Exception("> ALL DEAD...")
         if show:
@@ -227,9 +229,9 @@ def genetic_algo(map_size, bat_list, n_pts, corner_pts=False, n_gen=10, death_ra
     return(data)
 
 
-### 6 - LAUNCH !
+### 7 - LAUNCH !
 
-if 0 and __name__ == "__main__":
+if 1 and __name__ == "__main__":
 
     final_points = genetic_algo(map_size = 100,
                                 bat_list = BAT_list,
@@ -237,7 +239,8 @@ if 0 and __name__ == "__main__":
                                 corner_pts = True,
                                 n_gen = 20, # 20
                                 death_rate = 0.25, # 25
-                                death_immun = 0.05, # 5
+                                death_flip = 0.05, # 5
+                                death_immun = 0.2, # 10
                                 repro_rate = 0.25, # 25
                                 mut_std = 3.0,
                                 show = True,
@@ -245,4 +248,4 @@ if 0 and __name__ == "__main__":
                                 savefile = "test_gen.txt",
                                 resumefile = None) #"test_gen.txt")
 
-plot_3D(eval_solution, None, map_level=8.0, bat_list=BAT_list)
+# plot_3D(eval_solution, "test_gen.txt", map_level=8.0, bat_list=BAT_list)

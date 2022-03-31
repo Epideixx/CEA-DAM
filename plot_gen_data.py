@@ -86,9 +86,9 @@ def plot_3D(f, file_name, bat_list, map_level=0):
 
 
 if __name__ == "__main__":
-    plot_2D("test_gen.txt",
-            modulo = 1,
-            gen_num = None,
+    plot_2D("BENCHMARK_10/benchmark_5-10",
+            modulo = None,
+            gen_num = 19,
             bat_list = BAT_list, 
             sens_list = SENSORS_list, 
             src = (22,20))
